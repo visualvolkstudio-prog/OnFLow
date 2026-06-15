@@ -1,0 +1,10 @@
+{
+  "name": "onflow",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vercel dev",
+    "check": "node --check app.js && node --check api/login.js && node --check api/logout.js && node --check api/session.js && node --check api/state.js"
+  }
+}
