@@ -396,6 +396,7 @@ function configureAccessGate() {
     return;
   }
 
+  document.body.classList.remove("auth-checking");
   document.body.classList.add("access-locked");
   els.accessGate.hidden = false;
   els.accessError.textContent = "";
@@ -409,6 +410,7 @@ function configureAccessGate() {
 }
 
 function unlockWorkspace() {
+  document.body.classList.remove("auth-checking");
   document.body.classList.remove("access-locked");
   els.accessGate.hidden = true;
   if (!serverAuthAvailable) sessionStorage.setItem(SESSION_KEY, "true");
@@ -1997,7 +1999,13 @@ async function initializeApp() {
       remoteSession = session.authenticated === true;
       if (remoteSession) {
         if (session.username) localStorage.setItem(ACCESS_KEY, JSON.stringify({ username: session.username }));
-        await hydrateCloudState();
+        try {
+          await hydrateCloudState();
+        } catch (error) {
+          console.error(error);
+          cloudReady = false;
+          cloudSyncStatus = "Cloud sedang lambat. Data lokal tetap bisa dibuka.";
+        }
         unlockWorkspace();
       } else {
         configureAccessGate();
