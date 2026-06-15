@@ -440,6 +440,7 @@ async function handleAccessSubmit(event) {
       });
       remoteSession = true;
       localStorage.setItem(ACCESS_KEY, JSON.stringify({ username: result.username || username }));
+      unlockWorkspace();
       try {
         await hydrateCloudState();
       } catch (error) {
@@ -1999,14 +2000,13 @@ async function initializeApp() {
       remoteSession = session.authenticated === true;
       if (remoteSession) {
         if (session.username) localStorage.setItem(ACCESS_KEY, JSON.stringify({ username: session.username }));
-        try {
-          await hydrateCloudState();
-        } catch (error) {
+        unlockWorkspace();
+        hydrateCloudState().catch((error) => {
           console.error(error);
           cloudReady = false;
           cloudSyncStatus = "Cloud sedang lambat. Data lokal tetap bisa dibuka.";
-        }
-        unlockWorkspace();
+          renderSettings();
+        });
       } else {
         configureAccessGate();
       }
