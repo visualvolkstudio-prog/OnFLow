@@ -9,7 +9,7 @@
     <link rel="manifest" href="manifest.webmanifest">
     <link rel="icon" href="assets/onflow-mark.png" type="image/png">
     <link rel="stylesheet" href="styles.css?v=oneflow-6">
-    <link rel="stylesheet" href="compact.css?v=onflow-10">
+    <link rel="stylesheet" href="compact.css?v=onflow-11">
   </head>
   <body class="is-workspace access-locked auth-checking">
     <svg class="icon-sprite" aria-hidden="true">
@@ -271,6 +271,22 @@
           <div class="alarm-modal-actions">
             <button type="button" id="startBreakButton">Mulai Istirahat</button>
             <button class="ghost-button" type="button" id="dismissFocusAlarm">Tutup Alarm</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="focus-mode-overlay" id="focusModeOverlay" aria-labelledby="focusModeTimer" hidden>
+        <button class="focus-mode-close icon-only" id="closeFocusMode" type="button" aria-label="Keluar mode fokus" title="Keluar">
+          <svg class="ui-icon" aria-hidden="true"><use href="#icon-x"/></svg>
+        </button>
+        <div class="focus-mode-content">
+          <span class="focus-mode-kicker" id="focusModePhase">Kerja fokus</span>
+          <strong class="focus-mode-time" id="focusModeTimer">25:00</strong>
+          <p id="focusModeTask">Pilih tugas untuk mulai.</p>
+          <div class="focus-mode-progress" aria-hidden="true"><span id="focusModeProgress"></span></div>
+          <div class="focus-mode-actions">
+            <button class="icon-only" id="focusModePause" type="button" aria-label="Jeda fokus" title="Jeda"><svg class="ui-icon" aria-hidden="true"><use href="#icon-pause"/></svg></button>
+            <button class="icon-only" id="focusModeReset" type="button" aria-label="Atur ulang timer" title="Atur ulang"><svg class="ui-icon" aria-hidden="true"><use href="#icon-reset"/></svg></button>
           </div>
         </div>
       </div>
@@ -609,6 +625,6 @@
       <div class="empty-state">Belum ada data.</div>
     </template>
 
-    <script src="app.js?v=onflow-13"></script>
+    <script src="app.js?v=onflow-14"></script>
   </body>
 </html>

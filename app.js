@@ -123,6 +123,14 @@ const els = {
   startFocusTimer: document.querySelector("#startFocusTimer"),
   pauseFocusTimer: document.querySelector("#pauseFocusTimer"),
   resetFocusTimer: document.querySelector("#resetFocusTimer"),
+  focusModeOverlay: document.querySelector("#focusModeOverlay"),
+  focusModeTimer: document.querySelector("#focusModeTimer"),
+  focusModePhase: document.querySelector("#focusModePhase"),
+  focusModeTask: document.querySelector("#focusModeTask"),
+  focusModeProgress: document.querySelector("#focusModeProgress"),
+  focusModePause: document.querySelector("#focusModePause"),
+  focusModeReset: document.querySelector("#focusModeReset"),
+  closeFocusMode: document.querySelector("#closeFocusMode"),
   focusAlarmWidget: document.querySelector("#focusAlarmWidget"),
   focusAlarmBadge: document.querySelector("#focusAlarmBadge"),
   focusAlarmTitle: document.querySelector("#focusAlarmTitle"),
@@ -748,6 +756,7 @@ function renderFocusTimer() {
   els.startFocusTimer.disabled = focusTimer.running;
   els.startFocusTimer.ariaLabel = focusTimer.running ? "Fokus sedang berjalan" : "Mulai fokus";
   els.startFocusTimer.title = focusTimer.running ? "Berjalan" : "Mulai";
+  renderFocusMode({ selectedTask, phaseLabel, progress });
 }
 
 function selectFocusTask(taskId, startNow = false) {
@@ -766,6 +775,7 @@ function resetFocusSession(taskId = focusTimer.taskId) {
   focusTimer.total = FOCUS_PRESETS[focusTimer.preset].work;
   focusTimer.remaining = focusTimer.total;
   saveFocusTimer();
+  closeFocusMode();
 }
 
 function startFocusTimer() {
@@ -774,6 +784,7 @@ function startFocusTimer() {
   focusTimer.running = true;
   focusTimer.endTime = Date.now() + (focusTimer.remaining * 1000);
   saveFocusTimer();
+  openFocusMode();
   renderFocusTimer();
   focusInterval = window.setInterval(tickFocusTimer, 500);
 }
@@ -866,11 +877,42 @@ function restoreFocusTimer() {
         completeFocusPhase();
       } else if (!focusInterval) {
         focusInterval = window.setInterval(tickFocusTimer, 500);
+        openFocusMode();
       }
     }
   } catch {
     localStorage.removeItem(FOCUS_TIMER_KEY);
   }
+}
+
+function renderFocusMode(context = {}) {
+  if (!els.focusModeOverlay) return;
+  const selectedTask = context.selectedTask || state.tasks.find((task) => task.id === focusTimer.taskId);
+  const phaseLabel = context.phaseLabel || (focusTimer.phase === "work" ? "Kerja fokus" : "Istirahat");
+  const progress = typeof context.progress === "number"
+    ? context.progress
+    : focusTimer.total ? 100 - ((focusTimer.remaining / focusTimer.total) * 100) : 0;
+  els.focusModeTimer.textContent = formatTimer(focusTimer.remaining);
+  els.focusModePhase.textContent = focusTimer.running ? `${phaseLabel} berjalan` : phaseLabel;
+  els.focusModeTask.textContent = selectedTask
+    ? selectedTask.title
+    : focusTimer.phase === "work" ? "Tetap fokus, satu hal dulu." : "Tarik napas sebentar.";
+  els.focusModeProgress.style.width = `${Math.min(100, Math.max(0, progress))}%`;
+  els.focusModePause.innerHTML = focusTimer.running ? iconMarkup("pause") : iconMarkup("play");
+  els.focusModePause.ariaLabel = focusTimer.running ? "Jeda fokus" : "Lanjut fokus";
+  els.focusModePause.title = focusTimer.running ? "Jeda" : "Lanjut";
+}
+
+function openFocusMode() {
+  if (!els.focusModeOverlay || !els.focusModeOverlay.hidden) return;
+  els.focusModeOverlay.hidden = false;
+  document.body.classList.add("focus-mode-open");
+}
+
+function closeFocusMode() {
+  if (!els.focusModeOverlay) return;
+  els.focusModeOverlay.hidden = true;
+  document.body.classList.remove("focus-mode-open");
 }
 
 function formatTimer(seconds) {
@@ -1859,6 +1901,15 @@ els.resetFocusTimer.addEventListener("click", () => {
   resetFocusSession();
   renderFocusTimer();
 });
+els.focusModePause.addEventListener("click", () => {
+  if (focusTimer.running) pauseFocusTimer();
+  else startFocusTimer();
+});
+els.focusModeReset.addEventListener("click", () => {
+  resetFocusSession();
+  renderFocusTimer();
+});
+els.closeFocusMode.addEventListener("click", closeFocusMode);
 els.dismissFocusAlarm.addEventListener("click", dismissFocusAlarm);
 els.startBreakButton.addEventListener("click", startNextFocusPhase);
 els.settingsAlarmSound.addEventListener("change", () => {

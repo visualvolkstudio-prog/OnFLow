@@ -1530,3 +1530,126 @@ html[data-theme="dark"] input::placeholder {
 .habit-panel .list-item {
   flex-shrink: 0;
 }
+
+.focus-mode-overlay[hidden] {
+  display: none;
+}
+
+.focus-mode-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 110;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  background:
+    radial-gradient(circle at 50% 42%, rgba(47, 111, 94, 0.13), transparent 36%),
+    linear-gradient(145deg, #f7f8f4, #eaf0ea);
+  color: #111914;
+  padding: clamp(22px, 5vw, 56px);
+}
+
+.focus-mode-content {
+  display: grid;
+  justify-items: center;
+  width: min(100%, 980px);
+  gap: clamp(14px, 2.6vw, 26px);
+  text-align: center;
+}
+
+.focus-mode-kicker {
+  color: var(--accent-strong);
+  font-size: clamp(0.8rem, 1.5vw, 1rem);
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.focus-mode-time {
+  font-family: "DS Digital", "SFMono-Regular", "Roboto Mono", monospace;
+  color: #111914;
+  font-size: clamp(6rem, 22vw, 18rem);
+  font-weight: 400;
+  line-height: 0.78;
+  letter-spacing: 0;
+  text-shadow: 0 16px 50px rgba(25, 45, 36, 0.12);
+}
+
+.focus-mode-content p {
+  max-width: min(680px, 92vw);
+  margin: 0;
+  color: #5b665f;
+  font-size: clamp(1rem, 2.4vw, 1.35rem);
+  font-weight: 700;
+}
+
+.focus-mode-progress {
+  width: min(680px, 84vw);
+  height: 8px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: rgba(47, 111, 94, 0.13);
+}
+
+.focus-mode-progress span {
+  display: block;
+  width: 0%;
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, var(--accent), var(--blue));
+}
+
+.focus-mode-actions {
+  display: flex;
+  gap: 12px;
+}
+
+.focus-mode-actions button,
+.focus-mode-close {
+  width: 54px;
+  min-height: 54px;
+  border: 1px solid rgba(47, 111, 94, 0.18);
+  background: rgba(255, 255, 255, 0.72);
+  color: var(--accent-strong);
+  box-shadow: 0 16px 40px rgba(31, 49, 41, 0.1);
+}
+
+.focus-mode-close {
+  position: fixed;
+  top: clamp(16px, 3vw, 32px);
+  right: clamp(16px, 3vw, 32px);
+}
+
+body.focus-mode-open {
+  overflow: hidden;
+}
+
+html[data-theme="dark"] .focus-mode-overlay {
+  background:
+    radial-gradient(circle at 50% 42%, rgba(99, 170, 147, 0.13), transparent 36%),
+    linear-gradient(145deg, #0e1511, #17211c);
+  color: var(--copy);
+}
+
+html[data-theme="dark"] .focus-mode-time,
+html[data-theme="dark"] .focus-mode-content p {
+  color: var(--copy);
+}
+
+html[data-theme="dark"] .focus-mode-actions button,
+html[data-theme="dark"] .focus-mode-close {
+  border-color: rgba(120, 190, 167, 0.2);
+  background: rgba(25, 32, 28, 0.78);
+  color: var(--accent-strong);
+}
+
+@media (max-width: 620px) {
+  .focus-mode-time {
+    font-size: clamp(5.2rem, 28vw, 8.5rem);
+  }
+
+  .focus-mode-actions button,
+  .focus-mode-close {
+    width: 50px;
+    min-height: 50px;
+  }
+}
