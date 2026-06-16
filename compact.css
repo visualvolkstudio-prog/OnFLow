@@ -1503,3 +1503,30 @@ html[data-theme="dark"] input::placeholder {
     grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 }
+
+/* Keep the focus timer compact even when the habits list grows. */
+.daily-top-grid {
+  align-items: start;
+}
+
+.focus-panel {
+  align-self: start;
+  height: fit-content;
+  min-height: 0 !important;
+}
+
+.habit-panel {
+  align-self: start;
+}
+
+.habit-panel .list {
+  max-height: min(48vh, 390px);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding-right: 2px;
+  scrollbar-width: thin;
+}
+
+.habit-panel .list-item {
+  flex-shrink: 0;
+}
