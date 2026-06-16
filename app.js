@@ -937,7 +937,7 @@ function startRepeatingFocusAlarm() {
   focusAlarmInterval = window.setInterval(() => {
     playFocusAlarm();
     vibrateFocusAlarm();
-  }, 2800);
+  }, 2200);
 }
 
 function stopRepeatingFocusAlarm() {
@@ -954,18 +954,31 @@ function playFocusAlarm() {
     const context = primeFocusAudio();
     if (!context) return;
     const volume = Math.max(0.01, Math.min(1, state.preferences.alarmVolume / 100));
-    [0, 0.22, 0.44, 0.82, 1.04, 1.26].forEach((offset, index) => {
-      const oscillator = context.createOscillator();
+    const masterGain = context.createGain();
+    masterGain.gain.setValueAtTime(0.001, context.currentTime);
+    masterGain.gain.exponentialRampToValueAtTime(0.72 * volume, context.currentTime + 0.03);
+    masterGain.gain.exponentialRampToValueAtTime(0.001, context.currentTime + 1.55);
+    masterGain.connect(context.destination);
+
+    [0, 0.14, 0.28, 0.42, 0.68, 0.82, 0.96, 1.1].forEach((offset, index) => {
+      const bell = context.createOscillator();
+      const overtone = context.createOscillator();
       const gain = context.createGain();
-      oscillator.type = index % 3 === 2 ? "triangle" : "sine";
-      oscillator.frequency.value = index % 3 === 2 ? 1040 : 820;
+      bell.type = "square";
+      overtone.type = "square";
+      bell.frequency.setValueAtTime(index % 2 ? 620 : 880, context.currentTime + offset);
+      bell.frequency.linearRampToValueAtTime(index % 2 ? 600 : 910, context.currentTime + offset + 0.12);
+      overtone.frequency.setValueAtTime(index % 2 ? 1240 : 1760, context.currentTime + offset);
       gain.gain.setValueAtTime(0.001, context.currentTime + offset);
-      gain.gain.exponentialRampToValueAtTime(0.52 * volume, context.currentTime + offset + 0.02);
-      gain.gain.exponentialRampToValueAtTime(0.001, context.currentTime + offset + 0.18);
-      oscillator.connect(gain);
-      gain.connect(context.destination);
-      oscillator.start(context.currentTime + offset);
-      oscillator.stop(context.currentTime + offset + 0.2);
+      gain.gain.exponentialRampToValueAtTime(0.34, context.currentTime + offset + 0.015);
+      gain.gain.exponentialRampToValueAtTime(0.001, context.currentTime + offset + 0.11);
+      bell.connect(gain);
+      overtone.connect(gain);
+      gain.connect(masterGain);
+      bell.start(context.currentTime + offset);
+      overtone.start(context.currentTime + offset);
+      bell.stop(context.currentTime + offset + 0.13);
+      overtone.stop(context.currentTime + offset + 0.13);
     });
   } catch {
     // Browser may block audio until the user interacts. The visual timer still switches phase.
