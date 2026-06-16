@@ -1300,7 +1300,7 @@ h2 {
 
 .focus-mode-switch {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: repeat(5, 1fr);
   gap: 6px;
   border: 1px solid var(--line);
   border-radius: 12px;

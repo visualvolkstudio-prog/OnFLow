@@ -83,8 +83,11 @@ const focusTimer = {
   completedWorkSessions: 0
 };
 const FOCUS_PRESETS = {
+  "15-3": { work: 15 * 60, break: 3 * 60, longBreak: 10 * 60, cyclesBeforeLongBreak: 4, label: "Fokus singkat 15 menit", shortLabel: "15/3" },
   "25-5": { work: 25 * 60, break: 5 * 60, longBreak: 15 * 60, cyclesBeforeLongBreak: 4, label: "Fokus klasik 25 menit", shortLabel: "25/5" },
-  "50-10": { work: 50 * 60, break: 10 * 60, longBreak: 20 * 60, cyclesBeforeLongBreak: 2, label: "Fokus panjang 50 menit", shortLabel: "50/10" }
+  "30-5": { work: 30 * 60, break: 5 * 60, longBreak: 15 * 60, cyclesBeforeLongBreak: 4, label: "Fokus menengah 30 menit", shortLabel: "30/5" },
+  "50-10": { work: 50 * 60, break: 10 * 60, longBreak: 20 * 60, cyclesBeforeLongBreak: 2, label: "Fokus panjang 50 menit", shortLabel: "50/10" },
+  "60-15": { work: 60 * 60, break: 15 * 60, longBreak: 30 * 60, cyclesBeforeLongBreak: 2, label: "Fokus penuh 60 menit", shortLabel: "60/15" }
 };
 
 const els = {
@@ -124,6 +127,8 @@ const els = {
   pauseFocusTimer: document.querySelector("#pauseFocusTimer"),
   resetFocusTimer: document.querySelector("#resetFocusTimer"),
   focusModeOverlay: document.querySelector("#focusModeOverlay"),
+  focusModeClose: document.querySelector("#closeFocusMode"),
+  focusPresetButtonsFs: document.querySelectorAll(".focus-preset-fs"),
   focusModeTimer: document.querySelector("#focusModeTimer"),
   focusModePhase: document.querySelector("#focusModePhase"),
   focusModeTask: document.querySelector("#focusModeTask"),
@@ -751,6 +756,9 @@ function renderFocusTimer() {
   els.focusPresetButtons.forEach((button) => {
     button.classList.toggle("active", button.dataset.focusPreset === focusTimer.preset);
   });
+  els.focusPresetButtonsFs.forEach((button) => {
+    button.classList.toggle("active", button.dataset.focusPreset === focusTimer.preset);
+  });
   els.startFocusTimer.innerHTML = focusTimer.running ? iconMarkup("check") : iconMarkup("play");
   els.startFocusTimer.disabled = focusTimer.running;
   els.startFocusTimer.ariaLabel = focusTimer.running ? "Fokus sedang berjalan" : "Mulai fokus";
@@ -905,6 +913,12 @@ function openFocusMode() {
   if (!els.focusModeOverlay || !els.focusModeOverlay.hidden) return;
   els.focusModeOverlay.hidden = false;
   document.body.classList.add("focus-mode-open");
+}
+
+function closeFocusMode() {
+  if (!els.focusModeOverlay || els.focusModeOverlay.hidden) return;
+  els.focusModeOverlay.hidden = true;
+  document.body.classList.remove("focus-mode-open");
 }
 
 function formatTimer(seconds) {
@@ -1902,6 +1916,15 @@ els.focusModeReset.addEventListener("click", () => {
   openFocusMode();
   renderFocusTimer();
 });
+els.focusModeClose.addEventListener("click", closeFocusMode);
+els.focusPresetButtonsFs.forEach((button) => {
+  button.addEventListener("click", () => {
+    focusTimer.preset = button.dataset.focusPreset;
+    focusTimer.completedWorkSessions = 0;
+    resetFocusSession();
+    renderFocusTimer();
+  });
+});
 els.dismissFocusAlarm.addEventListener("click", dismissFocusAlarm);
 els.startBreakButton.addEventListener("click", startNextFocusPhase);
 els.settingsAlarmSound.addEventListener("change", () => {
@@ -2106,7 +2129,10 @@ document.addEventListener("click", (event) => {
   }
 });
 document.addEventListener("keydown", (event) => {
-  if (event.key === "Escape") closeCashflowPeriodMenu();
+  if (event.key === "Escape") {
+    closeCashflowPeriodMenu();
+    closeFocusMode();
+  }
 });
 els.reportPeriod.addEventListener("change", () => {
   const custom = els.reportPeriod.value === "custom";

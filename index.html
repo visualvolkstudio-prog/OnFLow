@@ -206,8 +206,11 @@
             </div>
             <div class="focus-timer-card">
               <div class="focus-mode-switch" role="group" aria-label="Preset fokus">
+                <button class="focus-preset" type="button" data-focus-preset="15-3" title="Fokus singkat: 15 menit fokus, 3 menit istirahat">15/3</button>
                 <button class="focus-preset active" type="button" data-focus-preset="25-5" title="Pomodoro klasik: 25 menit fokus, 5 menit istirahat">25/5</button>
+                <button class="focus-preset" type="button" data-focus-preset="30-5" title="Fokus santai: 30 menit fokus, 5 menit istirahat">30/5</button>
                 <button class="focus-preset" type="button" data-focus-preset="50-10" title="Fokus panjang: 50 menit fokus, 10 menit istirahat">50/10</button>
+                <button class="focus-preset" type="button" data-focus-preset="60-15" title="Fokus penuh: 60 menit fokus, 15 menit istirahat">60/15</button>
               </div>
               <strong class="focus-time" id="focusTimer">25:00</strong>
               <span class="focus-status" id="focusStatus">Kerja fokus 25 menit</span>
@@ -276,11 +279,19 @@
       </div>
 
       <div class="focus-mode-overlay" id="focusModeOverlay" aria-labelledby="focusModeTimer" hidden>
+        <button class="focus-mode-close icon-only" id="closeFocusMode" type="button" aria-label="Keluar dari mode fokus" title="Keluar"><svg class="ui-icon" aria-hidden="true"><use href="#icon-x"/></svg></button>
         <div class="focus-mode-content">
           <span class="focus-mode-kicker" id="focusModePhase">Kerja fokus</span>
           <strong class="focus-mode-time" id="focusModeTimer">25:00</strong>
           <p id="focusModeTask">Pilih tugas untuk mulai.</p>
           <div class="focus-mode-progress" aria-hidden="true"><span id="focusModeProgress"></span></div>
+          <div class="focus-mode-presets-fs" role="group" aria-label="Preset fokus">
+            <button class="focus-preset-fs" type="button" data-focus-preset="15-3" title="Fokus singkat: 15 menit fokus, 3 menit istirahat">15/3</button>
+            <button class="focus-preset-fs active" type="button" data-focus-preset="25-5" title="Pomodoro klasik: 25 menit fokus, 5 menit istirahat">25/5</button>
+            <button class="focus-preset-fs" type="button" data-focus-preset="30-5" title="Fokus santai: 30 menit fokus, 5 menit istirahat">30/5</button>
+            <button class="focus-preset-fs" type="button" data-focus-preset="50-10" title="Fokus panjang: 50 menit fokus, 10 menit istirahat">50/10</button>
+            <button class="focus-preset-fs" type="button" data-focus-preset="60-15" title="Fokus penuh: 60 menit fokus, 15 menit istirahat">60/15</button>
+          </div>
           <div class="focus-mode-actions">
             <button class="icon-only" id="focusModePause" type="button" aria-label="Jeda fokus" title="Jeda"><svg class="ui-icon" aria-hidden="true"><use href="#icon-pause"/></svg></button>
             <button class="icon-only" id="focusModeReset" type="button" aria-label="Atur ulang timer" title="Atur ulang"><svg class="ui-icon" aria-hidden="true"><use href="#icon-reset"/></svg></button>

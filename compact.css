@@ -1644,3 +1644,99 @@ html[data-theme="dark"] .focus-mode-actions button {
     min-height: 50px;
   }
 }
+
+.focus-mode-close {
+  position: absolute;
+  top: clamp(20px, 4vw, 40px);
+  right: clamp(20px, 4vw, 40px);
+  z-index: 10;
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  border: 1px solid rgba(47, 111, 94, 0.18);
+  background: rgba(255, 255, 255, 0.72);
+  color: var(--accent-strong);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 4px 12px rgba(31, 49, 41, 0.08);
+}
+
+.focus-mode-close:hover {
+  background: var(--accent-strong);
+  color: #fff;
+  border-color: var(--accent-strong);
+  transform: scale(1.05);
+}
+
+.focus-mode-presets-fs {
+  display: flex;
+  gap: 8px;
+  background: rgba(47, 111, 94, 0.06);
+  border: 1px solid rgba(47, 111, 94, 0.1);
+  padding: 6px;
+  border-radius: 14px;
+  margin-top: 10px;
+  max-width: 100%;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+.focus-mode-presets-fs::-webkit-scrollbar {
+  display: none;
+}
+
+.focus-preset-fs {
+  padding: 8px 16px;
+  font-size: clamp(0.85rem, 1.8vw, 1.05rem);
+  font-weight: 700;
+  border: none;
+  background: transparent;
+  color: #5b665f;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  white-space: nowrap;
+}
+
+.focus-preset-fs:hover {
+  color: var(--accent-strong);
+}
+
+.focus-preset-fs.active {
+  background: #fff;
+  color: var(--accent-strong);
+  box-shadow: 0 4px 12px rgba(31, 49, 41, 0.08);
+}
+
+html[data-theme="dark"] .focus-mode-close {
+  border-color: rgba(120, 190, 167, 0.2);
+  background: rgba(25, 32, 28, 0.78);
+  color: var(--accent-strong);
+}
+
+html[data-theme="dark"] .focus-mode-close:hover {
+  background: var(--accent);
+  color: #0e1511;
+  border-color: var(--accent);
+}
+
+html[data-theme="dark"] .focus-mode-presets-fs {
+  background: rgba(255, 255, 255, 0.03);
+  border-color: rgba(255, 255, 255, 0.08);
+}
+
+html[data-theme="dark"] .focus-preset-fs {
+  color: var(--copy-muted);
+}
+
+html[data-theme="dark"] .focus-preset-fs:hover {
+  color: var(--copy);
+}
+
+html[data-theme="dark"] .focus-preset-fs.active {
+  background: rgba(255, 255, 255, 0.12);
+  color: #fff;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
