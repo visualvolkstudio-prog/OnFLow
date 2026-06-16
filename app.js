@@ -72,6 +72,10 @@ let remoteSession = false;
 let cloudReady = false;
 let cloudSaveTimer = null;
 let cloudSyncStatus = "Data tersimpan di perangkat ini.";
+let plannerDateValue = formatDateInputStatic(new Date());
+let focusLocked = false;
+let lockHoldTimer = null;
+let _confirmResolve = null;
 const focusTimer = {
   preset: "25-5",
   phase: "work",
@@ -266,7 +270,15 @@ const els = {
   settingsProfileName: document.querySelector("#settingsProfileName"),
   settingsIntention: document.querySelector("#settingsIntention"),
   logoutButton: document.querySelector("#logoutButton"),
-  emptyStateTemplate: document.querySelector("#emptyStateTemplate")
+  emptyStateTemplate: document.querySelector("#emptyStateTemplate"),
+  plannerDate: document.querySelector("#plannerDate"),
+  prevDayButton: document.querySelector("#prevDayButton"),
+  nextDayButton: document.querySelector("#nextDayButton"),
+  todayPlannerButton: document.querySelector("#todayPlannerButton"),
+  focusModeLock: document.querySelector("#focusModeLock"),
+  confirmModalBackdrop: document.querySelector("#confirmModalBackdrop"),
+  confirmModalOk: document.querySelector("#confirmModalOk"),
+  confirmModalCancel: document.querySelector("#confirmModalCancel")
 };
 
 function loadState() {
@@ -556,6 +568,16 @@ function formatDateInput(date = new Date()) {
   return local.toISOString().slice(0, 10);
 }
 
+function formatDateInputStatic(date = new Date()) {
+  const local = new Date(date);
+  local.setMinutes(local.getMinutes() - local.getTimezoneOffset());
+  return local.toISOString().slice(0, 10);
+}
+
+function getPlannerDate() {
+  return els.plannerDate?.value || plannerDateValue || formatDateInput(new Date());
+}
+
 function formatMonthInput(date = new Date()) {
   return formatDateInput(date).slice(0, 7);
 }
@@ -569,6 +591,11 @@ function renderEmpty(container, text = "Belum ada data.") {
 function render() {
   els.headerGreeting.textContent = getGreeting();
   updateHeaderClock();
+
+  // Sync planner date input
+  if (els.plannerDate && !els.plannerDate.value) {
+    els.plannerDate.value = formatDateInput(new Date());
+  }
 
   renderTasks();
   renderFocusTimer();
@@ -917,8 +944,55 @@ function openFocusMode() {
 
 function closeFocusMode() {
   if (!els.focusModeOverlay || els.focusModeOverlay.hidden) return;
+  if (focusLocked) return; // Locked — cannot close
   els.focusModeOverlay.hidden = true;
   document.body.classList.remove("focus-mode-open");
+  document.body.classList.remove("focus-mode-locked");
+}
+
+function setFocusLock(locked) {
+  focusLocked = locked;
+  document.body.classList.toggle("focus-mode-locked", locked);
+  if (els.focusModeLock) {
+    els.focusModeLock.ariaLabel = locked ? "Buka kunci (tahan untuk membuka)" : "Kunci layar fokus";
+    els.focusModeLock.title = locked ? "Tahan untuk membuka kunci" : "Tekan lama untuk mengunci";
+    els.focusModeLock.querySelector("use").setAttribute("href", locked ? "#icon-unlock" : "#icon-lock");
+  }
+  if (els.focusModeClose) {
+    els.focusModeClose.style.visibility = locked ? "hidden" : "";
+    els.focusModeClose.setAttribute("aria-hidden", String(locked));
+  }
+}
+
+// --- Custom confirm modal ---
+function showConfirm(title, body) {
+  return new Promise((resolve) => {
+    if (!els.confirmModalBackdrop) { resolve(window.confirm(body)); return; }
+    els.confirmModalBackdrop.querySelector("#confirmModalTitle").textContent = title;
+    els.confirmModalBackdrop.querySelector("#confirmModalBody").textContent = body;
+    els.confirmModalBackdrop.hidden = false;
+    els.confirmModalBackdrop.removeAttribute("aria-hidden");
+    _confirmResolve = resolve;
+    els.confirmModalOk.focus();
+  });
+}
+
+function closeConfirmModal(result) {
+  if (!els.confirmModalBackdrop) return;
+  els.confirmModalBackdrop.hidden = true;
+  els.confirmModalBackdrop.setAttribute("aria-hidden", "true");
+  if (typeof _confirmResolve === "function") {
+    _confirmResolve(result);
+    _confirmResolve = null;
+  }
+}
+
+if (els.confirmModalOk) els.confirmModalOk.addEventListener("click", () => closeConfirmModal(true));
+if (els.confirmModalCancel) els.confirmModalCancel.addEventListener("click", () => closeConfirmModal(false));
+if (els.confirmModalBackdrop) {
+  els.confirmModalBackdrop.addEventListener("click", (e) => {
+    if (e.target === els.confirmModalBackdrop) closeConfirmModal(false);
+  });
 }
 
 function formatTimer(seconds) {
@@ -1051,19 +1125,36 @@ function startNextFocusPhase() {
 }
 
 function renderHabits() {
-  els.habitCount.textContent = `${state.habits.filter((habit) => habit.doneToday).length}/${state.habits.length}`;
+  const today = getPlannerDate();
+  const doneCount = state.habits.filter((habit) => {
+    if (typeof habit.doneDates === "object" && habit.doneDates !== null) {
+      return !!habit.doneDates[today];
+    }
+    return habit.doneToday;
+  }).length;
+  els.habitCount.textContent = `${doneCount}/${state.habits.length}`;
   if (!state.habits.length) return renderEmpty(els.habitList);
   els.habitList.replaceChildren(...state.habits.map((habit) => {
+    if (!habit.doneDates || typeof habit.doneDates !== "object") habit.doneDates = {};
+    const doneToday = !!habit.doneDates[today];
     const item = document.createElement("div");
-    item.className = `list-item${habit.doneToday ? " done" : ""}`;
+    item.className = `list-item${doneToday ? " done" : ""}`;
     const checkbox = document.createElement("input");
     checkbox.className = "check";
     checkbox.type = "checkbox";
-    checkbox.checked = habit.doneToday;
+    checkbox.checked = doneToday;
     checkbox.ariaLabel = `Tandai kebiasaan ${habit.name}`;
     checkbox.addEventListener("change", () => {
+      if (!habit.doneDates) habit.doneDates = {};
+      const date = getPlannerDate();
+      if (checkbox.checked) {
+        habit.doneDates[date] = true;
+        habit.streak = Math.max(0, Number(habit.streak || 0) + 1);
+      } else {
+        delete habit.doneDates[date];
+        habit.streak = Math.max(0, Number(habit.streak || 0) - 1);
+      }
       habit.doneToday = checkbox.checked;
-      habit.streak = Math.max(0, Number(habit.streak || 0) + (checkbox.checked ? 1 : -1));
       render();
     });
     const main = document.createElement("div");
@@ -1892,9 +1983,53 @@ els.clearDoneTasks.addEventListener("click", () => {
   render();
 });
 
+// Planner date picker handlers
+if (els.plannerDate) {
+  els.plannerDate.value = formatDateInput(new Date());
+  els.plannerDate.addEventListener("change", () => {
+    plannerDateValue = els.plannerDate.value;
+    render();
+  });
+}
+if (els.prevDayButton) {
+  els.prevDayButton.addEventListener("click", () => {
+    const current = new Date(getPlannerDate() + "T00:00:00");
+    current.setDate(current.getDate() - 1);
+    plannerDateValue = formatDateInput(current);
+    if (els.plannerDate) els.plannerDate.value = plannerDateValue;
+    render();
+  });
+}
+if (els.nextDayButton) {
+  els.nextDayButton.addEventListener("click", () => {
+    const current = new Date(getPlannerDate() + "T00:00:00");
+    current.setDate(current.getDate() + 1);
+    plannerDateValue = formatDateInput(current);
+    if (els.plannerDate) els.plannerDate.value = plannerDateValue;
+    render();
+  });
+}
+if (els.todayPlannerButton) {
+  els.todayPlannerButton.addEventListener("click", () => {
+    plannerDateValue = formatDateInput(new Date());
+    if (els.plannerDate) els.plannerDate.value = plannerDateValue;
+    render();
+  });
+}
+
+// --- Preset buttons (dashboard) with running-timer confirmation ---
 els.focusPresetButtons.forEach((button) => {
-  button.addEventListener("click", () => {
-    focusTimer.preset = button.dataset.focusPreset;
+  button.addEventListener("click", async () => {
+    const newPreset = button.dataset.focusPreset;
+    if (newPreset === focusTimer.preset) return;
+    if (focusTimer.running) {
+      const ok = await showConfirm(
+        "Ubah preset?",
+        "Timer sedang berjalan. Mengganti preset akan mereset sesi ini. Lanjutkan?"
+      );
+      if (!ok) return;
+    }
+    focusTimer.preset = newPreset;
     focusTimer.completedWorkSessions = 0;
     resetFocusSession();
     renderFocusTimer();
@@ -1916,10 +2051,51 @@ els.focusModeReset.addEventListener("click", () => {
   openFocusMode();
   renderFocusTimer();
 });
+// --- Focus close button ---
 els.focusModeClose.addEventListener("click", closeFocusMode);
+
+// --- Lock button: long-press to lock, long-press to unlock ---
+if (els.focusModeLock) {
+  const LOCK_HOLD_MS = 700;
+  let lockRipple = null;
+
+  function startLockHold(e) {
+    e.preventDefault();
+    lockRipple = window.setTimeout(() => {
+      lockRipple = null;
+      setFocusLock(!focusLocked);
+    }, LOCK_HOLD_MS);
+    els.focusModeLock.classList.add("holding");
+  }
+
+  function cancelLockHold() {
+    if (lockRipple) {
+      window.clearTimeout(lockRipple);
+      lockRipple = null;
+    }
+    els.focusModeLock.classList.remove("holding");
+  }
+
+  els.focusModeLock.addEventListener("mousedown", startLockHold);
+  els.focusModeLock.addEventListener("touchstart", startLockHold, { passive: false });
+  els.focusModeLock.addEventListener("mouseup", cancelLockHold);
+  els.focusModeLock.addEventListener("mouseleave", cancelLockHold);
+  els.focusModeLock.addEventListener("touchend", cancelLockHold);
+  els.focusModeLock.addEventListener("touchcancel", cancelLockHold);
+}
+// --- Preset buttons (fullscreen) with running-timer confirmation ---
 els.focusPresetButtonsFs.forEach((button) => {
-  button.addEventListener("click", () => {
-    focusTimer.preset = button.dataset.focusPreset;
+  button.addEventListener("click", async () => {
+    const newPreset = button.dataset.focusPreset;
+    if (newPreset === focusTimer.preset) return;
+    if (focusTimer.running) {
+      const ok = await showConfirm(
+        "Ubah preset?",
+        "Timer sedang berjalan. Mengganti preset akan mereset sesi ini. Lanjutkan?"
+      );
+      if (!ok) return;
+    }
+    focusTimer.preset = newPreset;
     focusTimer.completedWorkSessions = 0;
     resetFocusSession();
     renderFocusTimer();
