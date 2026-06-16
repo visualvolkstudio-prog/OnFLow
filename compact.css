@@ -1740,3 +1740,24 @@ html[data-theme="dark"] .focus-preset-fs.active {
   color: #fff;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
 }
+
+.focus-mode-switch {
+  display: flex !important;
+  flex-wrap: wrap !important;
+  gap: 6px !important;
+  border: 1px solid var(--line) !important;
+  border-radius: 12px !important;
+  background: var(--surface-muted) !important;
+  padding: 4px !important;
+}
+
+.focus-preset {
+  flex: 1 1 auto !important;
+  min-width: 50px !important;
+  min-height: 32px !important;
+  border: 0 !important;
+  background: transparent !important;
+  color: var(--muted) !important;
+  border-radius: 8px !important;
+  transition: all 0.2s ease !important;
+}
