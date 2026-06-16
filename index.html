@@ -385,7 +385,7 @@
                 <input id="incomePlanName" placeholder="Sumber pendapatan" required>
                 <div class="price-input-wrapper">
                   <span class="price-prefix" data-input-id="incomePlanAmount">IDR</span>
-                  <input id="incomePlanAmount" type="number" min="0" step="1000" placeholder="Nominal rencana" required>
+                  <input id="incomePlanAmount" type="number" min="0" step="1" placeholder="Nominal rencana" required>
                 </div>
                 <button type="submit">Tambah</button>
               </form>
@@ -398,7 +398,7 @@
                 <select id="budgetCategory" aria-label="Kategori anggaran"></select>
                 <div class="price-input-wrapper">
                   <span class="price-prefix" data-input-id="budgetAmount">IDR</span>
-                  <input id="budgetAmount" type="number" min="0" step="1000" placeholder="Anggaran bulanan" required>
+                  <input id="budgetAmount" type="number" min="0" step="1" placeholder="Anggaran bulanan" required>
                 </div>
                 <button type="submit">Atur Anggaran</button>
               </form>
@@ -413,7 +413,7 @@
                   <input id="budgetBillDueDate" type="date" required>
                   <div class="price-input-wrapper">
                     <span class="price-prefix" data-input-id="budgetBillAmount">IDR</span>
-                    <input id="budgetBillAmount" type="number" min="0" step="1000" placeholder="Nominal" required>
+                    <input id="budgetBillAmount" type="number" min="0" step="1" placeholder="Nominal" required>
                   </div>
                   <button type="submit">Tambah</button>
                 </form>
@@ -426,7 +426,7 @@
                   <input id="budgetSavingName" placeholder="Nama tujuan" required>
                   <div class="price-input-wrapper">
                     <span class="price-prefix" data-input-id="budgetSavingAmount">IDR</span>
-                    <input id="budgetSavingAmount" type="number" min="0" step="1000" placeholder="Target bulan ini" required>
+                    <input id="budgetSavingAmount" type="number" min="0" step="1" placeholder="Target bulan ini" required>
                   </div>
                   <button type="submit">Tambah</button>
                 </form>
@@ -440,7 +440,7 @@
                   <input id="budgetDebtDueDate" type="date" required>
                   <div class="price-input-wrapper">
                     <span class="price-prefix" data-input-id="budgetDebtAmount">IDR</span>
-                    <input id="budgetDebtAmount" type="number" min="0" step="1000" placeholder="Nominal" required>
+                    <input id="budgetDebtAmount" type="number" min="0" step="1" placeholder="Nominal" required>
                   </div>
                   <button type="submit">Tambah</button>
                 </form>
@@ -452,7 +452,7 @@
           <section class="cashflow-tab-panel" data-cashflow-panel="bills" hidden>
             <div class="section-heading"><h3>Tagihan</h3></div>
             <form class="entity-form" id="billForm">
-              <input id="billName" placeholder="Nama tagihan" required><input id="billDueDate" type="date" required><div class="price-input-wrapper"><span class="price-prefix" data-input-id="billPlanned">IDR</span><input id="billPlanned" type="number" min="0" step="1000" placeholder="Nominal rencana" required></div><button type="submit">Tambah Tagihan</button>
+              <input id="billName" placeholder="Nama tagihan" required><input id="billDueDate" type="date" required><div class="price-input-wrapper"><span class="price-prefix" data-input-id="billPlanned">IDR</span><input id="billPlanned" type="number" min="0" step="1" placeholder="Nominal rencana" required></div><button type="submit">Tambah Tagihan</button>
             </form>
             <div class="entity-list" id="billList"></div>
           </section>
@@ -460,7 +460,7 @@
           <section class="cashflow-tab-panel" data-cashflow-panel="savings" hidden>
             <div class="section-heading"><h3>Tabungan &amp; Investasi</h3></div>
             <form class="entity-form" id="savingForm">
-              <input id="savingName" placeholder="Nama tujuan" required><div class="price-input-wrapper"><span class="price-prefix" data-input-id="savingTarget">IDR</span><input id="savingTarget" type="number" min="0" step="1000" placeholder="Target nominal" required></div><button type="submit">Tambah Target</button>
+              <input id="savingName" placeholder="Nama tujuan" required><div class="price-input-wrapper"><span class="price-prefix" data-input-id="savingTarget">IDR</span><input id="savingTarget" type="number" min="0" step="1" placeholder="Target nominal" required></div><button type="submit">Tambah Target</button>
             </form>
             <div class="entity-list" id="savingList"></div>
           </section>
@@ -468,7 +468,7 @@
           <section class="cashflow-tab-panel" data-cashflow-panel="debt" hidden>
             <div class="section-heading"><h3>Cicilan &amp; Utang</h3></div>
             <form class="entity-form" id="debtForm">
-              <input id="debtName" placeholder="Nama utang" required><input id="debtDueDate" type="date" required><div class="price-input-wrapper"><span class="price-prefix" data-input-id="debtPlanned">IDR</span><input id="debtPlanned" type="number" min="0" step="1000" placeholder="Nominal rencana" required></div><button type="submit">Tambah Utang</button>
+              <input id="debtName" placeholder="Nama utang" required><input id="debtDueDate" type="date" required><div class="price-input-wrapper"><span class="price-prefix" data-input-id="debtPlanned">IDR</span><input id="debtPlanned" type="number" min="0" step="1" placeholder="Nominal rencana" required></div><button type="submit">Tambah Utang</button>
             </form>
             <div class="entity-list" id="debtList"></div>
           </section>
@@ -480,7 +480,7 @@
               <select id="categoryType" aria-label="Tipe kategori"></select>
               <div class="price-input-wrapper">
                 <span class="price-prefix" data-input-id="categoryBudget">IDR</span>
-                <input id="categoryBudget" type="number" min="0" step="1000" placeholder="Anggaran bulanan (opsional)">
+                <input id="categoryBudget" type="number" min="0" step="1" placeholder="Anggaran bulanan (opsional)">
               </div>
               <input id="categoryColor" type="color" value="#2f6f5e" aria-label="Warna kategori">
               <button type="submit">Tambah Kategori</button>
@@ -619,7 +619,7 @@
           <span>Nominal</span>
           <div class="price-input-wrapper">
             <span class="price-prefix" data-input-id="cashflowAmount">IDR</span>
-            <input id="cashflowAmount" type="number" min="0" step="1000" inputmode="numeric" placeholder="0" required>
+            <input id="cashflowAmount" type="number" min="0" step="1" inputmode="numeric" placeholder="0" required>
           </div>
         </label>
         <label><span>Tanggal</span><input id="cashflowDate" type="date" required></label>
