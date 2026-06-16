@@ -2,6 +2,7 @@ const STORAGE_KEY = "dailyPlannerCashflow.v1";
 const ACCESS_KEY = "onflow.localAccess.v1";
 const SESSION_KEY = "onflow.unlocked";
 const PENDING_SYNC_KEY = `${STORAGE_KEY}.pendingSync`;
+const FOCUS_TIMER_KEY = `${STORAGE_KEY}.focusTimer`;
 const MONTH_NAMES = ["Jan", "Feb", "Mar", "Apr", "Mei", "Jun", "Jul", "Agu", "Sep", "Okt", "Nov", "Des"];
 const TRANSACTION_TYPES = {
   income: { label: "Pendapatan", className: "income", sign: "+" },
@@ -725,6 +726,7 @@ function renderTasks() {
 }
 
 function renderFocusTimer() {
+  syncFocusRemaining();
   const selectedTask = state.tasks.find((task) => task.id === focusTimer.taskId);
   const preset = FOCUS_PRESETS[focusTimer.preset];
   const phaseLabel = focusTimer.phase === "work" ? "Kerja fokus" : "Istirahat";
@@ -763,6 +765,7 @@ function resetFocusSession(taskId = focusTimer.taskId) {
   focusTimer.endTime = 0;
   focusTimer.total = FOCUS_PRESETS[focusTimer.preset].work;
   focusTimer.remaining = focusTimer.total;
+  saveFocusTimer();
 }
 
 function startFocusTimer() {
@@ -770,6 +773,7 @@ function startFocusTimer() {
   primeFocusAudio();
   focusTimer.running = true;
   focusTimer.endTime = Date.now() + (focusTimer.remaining * 1000);
+  saveFocusTimer();
   renderFocusTimer();
   focusInterval = window.setInterval(tickFocusTimer, 500);
 }
@@ -779,6 +783,7 @@ function pauseFocusTimer() {
   stopFocusInterval();
   focusTimer.running = false;
   focusTimer.endTime = 0;
+  saveFocusTimer();
   renderFocusTimer();
 }
 
@@ -819,6 +824,7 @@ function completeFocusPhase() {
   focusTimer.endTime = 0;
   switchFocusPhase(completedPhase);
   triggerFocusAlarm(completedPhase);
+  saveFocusTimer();
   saveState();
   renderFocusTimer();
 }
@@ -834,6 +840,37 @@ function switchFocusPhase(completedPhase = focusTimer.phase) {
     : longBreakDue ? preset.longBreak : preset.break;
   focusTimer.remaining = focusTimer.total;
   focusTimer.endTime = 0;
+  saveFocusTimer();
+}
+
+function saveFocusTimer() {
+  localStorage.setItem(FOCUS_TIMER_KEY, JSON.stringify(focusTimer));
+}
+
+function restoreFocusTimer() {
+  try {
+    const saved = JSON.parse(localStorage.getItem(FOCUS_TIMER_KEY) || "null");
+    if (!saved || !FOCUS_PRESETS[saved.preset]) return;
+    focusTimer.preset = saved.preset;
+    focusTimer.phase = saved.phase === "break" ? "break" : "work";
+    focusTimer.total = Math.max(1, Number(saved.total) || FOCUS_PRESETS[focusTimer.preset].work);
+    focusTimer.remaining = Math.max(0, Number(saved.remaining) || focusTimer.total);
+    focusTimer.endTime = Number(saved.endTime) || 0;
+    focusTimer.taskId = typeof saved.taskId === "string" ? saved.taskId : "";
+    focusTimer.completedWorkSessions = Math.max(0, Number(saved.completedWorkSessions) || 0);
+    focusTimer.running = Boolean(saved.running && saved.endTime);
+
+    if (focusTimer.running) {
+      syncFocusRemaining();
+      if (focusTimer.remaining <= 0) {
+        completeFocusPhase();
+      } else if (!focusInterval) {
+        focusInterval = window.setInterval(tickFocusTimer, 500);
+      }
+    }
+  } catch {
+    localStorage.removeItem(FOCUS_TIMER_KEY);
+  }
 }
 
 function formatTimer(seconds) {
@@ -1135,15 +1172,40 @@ function renderCategoryChart(entries) {
   const pieLayout = els.expensePieChart.closest(".pie-layout");
   pieLayout?.classList.toggle("is-empty", !total);
   if (!total) {
-    els.expensePieChart.style.background = "conic-gradient(#eef0ec 0 100%)";
+    els.expensePieChart.style.background = "";
+    els.expensePieChart.innerHTML = "";
     return renderEmpty(els.categoryChart, "Belum ada pengeluaran.");
   }
   let cursor = 0;
-  els.expensePieChart.style.background = `conic-gradient(${sorted.map(([, value], index) => {
+  els.expensePieChart.innerHTML = "";
+  els.expensePieChart.style.background = "transparent";
+  const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+  svg.setAttribute("viewBox", "0 0 100 100");
+  svg.setAttribute("role", "img");
+  svg.setAttribute("aria-label", "Pengeluaran per kategori");
+  const labelNodes = [];
+  sorted.forEach(([name, value], index) => {
     const start = cursor;
     cursor += (value / total) * 100;
-    return `${categoryColor(sorted[index][0], index)} ${start}% ${cursor}%`;
-  }).join(", ")})`;
+    const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
+    path.setAttribute("d", pieSlicePath(50, 50, 43, start / 100, cursor / 100));
+    path.setAttribute("fill", categoryColor(name, index));
+    path.setAttribute("stroke", "var(--panel-bg)");
+    path.setAttribute("stroke-width", "1.8");
+    path.setAttribute("stroke-linejoin", "round");
+    svg.append(path);
+
+    const percent = cursor - start;
+    const middle = start + (percent / 2);
+    const label = document.createElement("span");
+    label.className = "pie-percentage";
+    label.textContent = `${Math.round(percent)}%`;
+    label.style.setProperty("--angle", `${middle * 3.6}deg`);
+    label.style.setProperty("--distance", percent < 10 ? "34%" : "30%");
+    label.title = `${name}: ${formatCurrency(value)}`;
+    labelNodes.push(label);
+  });
+  els.expensePieChart.replaceChildren(svg, ...labelNodes);
   els.categoryChart.replaceChildren(...sorted.map(([name, amount], index) => {
     const row = document.createElement("div");
     row.className = "category-legend-row";
@@ -1153,6 +1215,37 @@ function renderCategoryChart(entries) {
     row.querySelector("strong").textContent = formatCurrency(amount);
     return row;
   }));
+}
+
+function pieSlicePath(cx, cy, radius, startRatio, endRatio) {
+  if (endRatio - startRatio >= 0.999) {
+    return [
+      `M ${cx} ${cy}`,
+      `L ${cx} ${cy - radius}`,
+      `A ${radius} ${radius} 0 1 1 ${cx - 0.01} ${cy - radius}`,
+      `A ${radius} ${radius} 0 1 1 ${cx} ${cy - radius}`,
+      "Z"
+    ].join(" ");
+  }
+  const startAngle = (startRatio * 360) - 90;
+  const endAngle = (endRatio * 360) - 90;
+  const start = polarToCartesian(cx, cy, radius, endAngle);
+  const end = polarToCartesian(cx, cy, radius, startAngle);
+  const largeArc = endAngle - startAngle <= 180 ? "0" : "1";
+  return [
+    `M ${cx} ${cy}`,
+    `L ${start.x} ${start.y}`,
+    `A ${radius} ${radius} 0 ${largeArc} 0 ${end.x} ${end.y}`,
+    "Z"
+  ].join(" ");
+}
+
+function polarToCartesian(cx, cy, radius, angleInDegrees) {
+  const angleInRadians = (angleInDegrees * Math.PI) / 180;
+  return {
+    x: cx + (radius * Math.cos(angleInRadians)),
+    y: cy + (radius * Math.sin(angleInRadians))
+  };
 }
 
 function renderAnnualChart(entries) {
@@ -1984,6 +2077,7 @@ els.cashflowTabButtons.forEach((button) => button.addEventListener("click", () =
 async function initializeApp() {
   const localDevelopmentHosts = new Set(["localhost", "127.0.0.1", "::1"]);
   const allowLocalAccess = localDevelopmentHosts.has(window.location.hostname);
+  restoreFocusTimer();
   setActiveTab("home");
   setActiveCashflowTab(localStorage.getItem(`${STORAGE_KEY}.activeCashflowTab`) || "overview");
   applyTheme(state.preferences.theme);

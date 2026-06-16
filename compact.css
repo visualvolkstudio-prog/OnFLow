@@ -47,7 +47,6 @@
   min-height: 34px;
   align-items: center;
   display: flex;
-  gap: 9px;
   padding: 0 10px;
 }
 
@@ -75,8 +74,10 @@
 
 .sidebar-brand strong {
   font-family: "Switzer", ui-sans-serif, system-ui, sans-serif;
-  font-size: 1rem;
-  font-weight: 600;
+  font-size: 1.22rem;
+  font-weight: 800;
+  letter-spacing: 0;
+  color: var(--copy);
 }
 
 .sidebar-menu {
@@ -550,10 +551,9 @@ body.auth-checking .access-card::after {
 .access-brand {
   display: flex;
   align-items: center;
-  gap: 9px;
   color: var(--accent-strong);
-  font-size: 1rem;
-  font-weight: 700;
+  font-size: 1.35rem;
+  font-weight: 800;
 }
 
 .access-brand .brand-mark {
@@ -901,6 +901,39 @@ body.auth-checking .access-card::after {
 
 .category-chart {
   min-width: 0;
+}
+
+.pie-chart {
+  position: relative;
+  display: grid;
+  place-items: center;
+  border: 0 !important;
+  box-shadow: none !important;
+  overflow: hidden;
+  isolation: isolate;
+}
+
+.pie-chart svg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.pie-percentage {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  z-index: 2;
+  transform:
+    translate(-50%, -50%)
+    rotate(var(--angle))
+    translateY(calc(-1 * var(--distance, 30%)))
+    rotate(calc(-1 * var(--angle)));
+  color: rgba(21, 29, 25, 0.76);
+  font-size: 0.82rem;
+  font-weight: 700;
+  line-height: 1;
 }
 
 .pie-layout.is-empty {
