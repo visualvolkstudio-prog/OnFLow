@@ -1603,20 +1603,13 @@ html[data-theme="dark"] input::placeholder {
   gap: 12px;
 }
 
-.focus-mode-actions button,
-.focus-mode-close {
+.focus-mode-actions button {
   width: 54px;
   min-height: 54px;
   border: 1px solid rgba(47, 111, 94, 0.18);
   background: rgba(255, 255, 255, 0.72);
   color: var(--accent-strong);
   box-shadow: 0 16px 40px rgba(31, 49, 41, 0.1);
-}
-
-.focus-mode-close {
-  position: fixed;
-  top: clamp(16px, 3vw, 32px);
-  right: clamp(16px, 3vw, 32px);
 }
 
 body.focus-mode-open {
@@ -1635,8 +1628,7 @@ html[data-theme="dark"] .focus-mode-content p {
   color: var(--copy);
 }
 
-html[data-theme="dark"] .focus-mode-actions button,
-html[data-theme="dark"] .focus-mode-close {
+html[data-theme="dark"] .focus-mode-actions button {
   border-color: rgba(120, 190, 167, 0.2);
   background: rgba(25, 32, 28, 0.78);
   color: var(--accent-strong);
@@ -1647,8 +1639,7 @@ html[data-theme="dark"] .focus-mode-close {
     font-size: clamp(5.2rem, 28vw, 8.5rem);
   }
 
-  .focus-mode-actions button,
-  .focus-mode-close {
+  .focus-mode-actions button {
     width: 50px;
     min-height: 50px;
   }

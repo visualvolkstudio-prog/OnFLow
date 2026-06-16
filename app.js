@@ -130,7 +130,6 @@ const els = {
   focusModeProgress: document.querySelector("#focusModeProgress"),
   focusModePause: document.querySelector("#focusModePause"),
   focusModeReset: document.querySelector("#focusModeReset"),
-  closeFocusMode: document.querySelector("#closeFocusMode"),
   focusAlarmWidget: document.querySelector("#focusAlarmWidget"),
   focusAlarmBadge: document.querySelector("#focusAlarmBadge"),
   focusAlarmTitle: document.querySelector("#focusAlarmTitle"),
@@ -775,7 +774,6 @@ function resetFocusSession(taskId = focusTimer.taskId) {
   focusTimer.total = FOCUS_PRESETS[focusTimer.preset].work;
   focusTimer.remaining = focusTimer.total;
   saveFocusTimer();
-  closeFocusMode();
 }
 
 function startFocusTimer() {
@@ -907,12 +905,6 @@ function openFocusMode() {
   if (!els.focusModeOverlay || !els.focusModeOverlay.hidden) return;
   els.focusModeOverlay.hidden = false;
   document.body.classList.add("focus-mode-open");
-}
-
-function closeFocusMode() {
-  if (!els.focusModeOverlay) return;
-  els.focusModeOverlay.hidden = true;
-  document.body.classList.remove("focus-mode-open");
 }
 
 function formatTimer(seconds) {
@@ -1907,9 +1899,9 @@ els.focusModePause.addEventListener("click", () => {
 });
 els.focusModeReset.addEventListener("click", () => {
   resetFocusSession();
+  openFocusMode();
   renderFocusTimer();
 });
-els.closeFocusMode.addEventListener("click", closeFocusMode);
 els.dismissFocusAlarm.addEventListener("click", dismissFocusAlarm);
 els.startBreakButton.addEventListener("click", startNextFocusPhase);
 els.settingsAlarmSound.addEventListener("change", () => {
