@@ -3,6 +3,7 @@ const ACCESS_KEY = "onflow.localAccess.v1";
 const SESSION_KEY = "onflow.unlocked";
 const PENDING_SYNC_KEY = `${STORAGE_KEY}.pendingSync`;
 const FOCUS_TIMER_KEY = `${STORAGE_KEY}.focusTimer`;
+const DEFAULT_USERNAME = "gilfram";
 const MONTH_NAMES = ["Jan", "Feb", "Mar", "Apr", "Mei", "Jun", "Jul", "Agu", "Sep", "Okt", "Nov", "Des"];
 const TRANSACTION_TYPES = {
   income: { label: "Pendapatan", className: "income", sign: "+" },
@@ -21,6 +22,32 @@ const CURRENCIES = {
   GBP: { locale: "en-GB", digits: 2 },
   JPY: { locale: "ja-JP", digits: 0 },
   AUD: { locale: "en-AU", digits: 2 }
+};
+const ALARM_TONES = {
+  vintage: {
+    label: "Jadul",
+    waves: ["square", "square"],
+    notes: [880, 620],
+    offsets: [0, 0.14, 0.28, 0.42, 0.68, 0.82, 0.96, 1.1],
+    duration: 1.55,
+    peak: 0.72
+  },
+  soft: {
+    label: "Lembut",
+    waves: ["sine", "triangle"],
+    notes: [660, 880, 990],
+    offsets: [0, 0.24, 0.48, 0.82],
+    duration: 1.4,
+    peak: 0.42
+  },
+  digital: {
+    label: "Digital",
+    waves: ["square", "sawtooth"],
+    notes: [1040, 780, 1040, 520],
+    offsets: [0, 0.1, 0.2, 0.34, 0.58, 0.68, 0.78],
+    duration: 1.1,
+    peak: 0.58
+  }
 };
 
 const defaultState = {
@@ -56,7 +83,7 @@ const defaultState = {
   debts: [],
   incomePlans: [],
   focusSessions: [],
-  preferences: { alarmSound: true, alarmVolume: 75, theme: "system", currency: "IDR" }
+  preferences: { alarmSound: true, alarmVolume: 75, alarmTone: "vintage", theme: "system", currency: "IDR" }
 };
 
 let state = loadState();
@@ -265,6 +292,7 @@ const els = {
   reportAverageFocus: document.querySelector("#reportAverageFocus"),
   themeButtons: document.querySelectorAll("[data-theme-option]"),
   settingsAlarmSound: document.querySelector("#settingsAlarmSound"),
+  settingsAlarmTone: document.querySelector("#settingsAlarmTone"),
   settingsAlarmVolume: document.querySelector("#settingsAlarmVolume"),
   settingsCurrency: document.querySelector("#settingsCurrency"),
   settingsProfileName: document.querySelector("#settingsProfileName"),
@@ -326,6 +354,7 @@ function normalizeState(saved) {
     preferences: {
       alarmSound: saved.preferences?.alarmSound !== false,
       alarmVolume: Number(saved.preferences?.alarmVolume ?? 75),
+      alarmTone: ALARM_TONES[saved.preferences?.alarmTone] ? saved.preferences.alarmTone : "vintage",
       theme: ["light", "dark", "system"].includes(saved.preferences?.theme) ? saved.preferences.theme : "system",
       currency: CURRENCIES[saved.preferences?.currency] ? saved.preferences.currency : "IDR"
     }
@@ -413,6 +442,12 @@ function getAccessProfile() {
   }
 }
 
+function getDisplayUsername() {
+  const profile = getAccessProfile();
+  const username = profile?.username || profile?.name || DEFAULT_USERNAME;
+  return username.toLocaleLowerCase("id-ID") === "onflow" ? DEFAULT_USERNAME : username;
+}
+
 function configureAccessGate() {
   const profile = getAccessProfile();
   const locallyUnlocked = !serverAuthAvailable && sessionStorage.getItem(SESSION_KEY) === "true";
@@ -425,7 +460,7 @@ function configureAccessGate() {
   document.body.classList.add("access-locked");
   els.accessGate.hidden = false;
   els.accessError.textContent = "";
-  const savedUsername = profile?.username || profile?.name || "";
+  const savedUsername = getDisplayUsername();
   els.accessUsername.value = savedUsername;
   els.accessKicker.textContent = "Akses pribadi";
   els.accessTitle.textContent = "Selamat datang.";
@@ -514,11 +549,11 @@ function applyTheme(theme = state.preferences.theme) {
 }
 
 function renderSettings() {
-  const profile = getAccessProfile();
-  const username = profile?.username || profile?.name || "";
+  const username = getDisplayUsername();
   els.settingsProfileName.textContent = username || "Profil OnFlow";
   els.settingsIntention.textContent = remoteSession ? cloudSyncStatus : "Data tersimpan secara lokal di perangkat ini.";
   els.settingsAlarmSound.checked = state.preferences.alarmSound;
+  els.settingsAlarmTone.value = state.preferences.alarmTone;
   els.settingsAlarmVolume.value = state.preferences.alarmVolume;
   els.settingsCurrency.value = state.preferences.currency;
   applyTheme(state.preferences.theme);
@@ -629,10 +664,11 @@ function updateHeaderClock() {
 
 function getGreeting(date = new Date()) {
   const hour = date.getHours();
-  if (hour < 11) return "Selamat pagi 👋";
-  if (hour < 15) return "Selamat siang 👋";
-  if (hour < 19) return "Selamat sore 👋";
-  return "Selamat malam 👋";
+  const name = getDisplayUsername();
+  if (hour < 11) return `Selamat pagi, ${name} 👋`;
+  if (hour < 15) return `Selamat siang, ${name} 👋`;
+  if (hour < 19) return `Selamat sore, ${name} 👋`;
+  return `Selamat malam, ${name} 👋`;
 }
 
 function setActiveTab(tabName) {
@@ -1078,24 +1114,26 @@ function playFocusAlarm() {
   try {
     const context = primeFocusAudio();
     if (!context) return;
+    const tone = ALARM_TONES[state.preferences.alarmTone] || ALARM_TONES.vintage;
     const volume = Math.max(0.01, Math.min(1, state.preferences.alarmVolume / 100));
     const masterGain = context.createGain();
     masterGain.gain.setValueAtTime(0.001, context.currentTime);
-    masterGain.gain.exponentialRampToValueAtTime(0.72 * volume, context.currentTime + 0.03);
-    masterGain.gain.exponentialRampToValueAtTime(0.001, context.currentTime + 1.55);
+    masterGain.gain.exponentialRampToValueAtTime(tone.peak * volume, context.currentTime + 0.03);
+    masterGain.gain.exponentialRampToValueAtTime(0.001, context.currentTime + tone.duration);
     masterGain.connect(context.destination);
 
-    [0, 0.14, 0.28, 0.42, 0.68, 0.82, 0.96, 1.1].forEach((offset, index) => {
+    tone.offsets.forEach((offset, index) => {
       const bell = context.createOscillator();
       const overtone = context.createOscillator();
       const gain = context.createGain();
-      bell.type = "square";
-      overtone.type = "square";
-      bell.frequency.setValueAtTime(index % 2 ? 620 : 880, context.currentTime + offset);
-      bell.frequency.linearRampToValueAtTime(index % 2 ? 600 : 910, context.currentTime + offset + 0.12);
-      overtone.frequency.setValueAtTime(index % 2 ? 1240 : 1760, context.currentTime + offset);
+      const baseNote = tone.notes[index % tone.notes.length];
+      bell.type = tone.waves[0];
+      overtone.type = tone.waves[1];
+      bell.frequency.setValueAtTime(baseNote, context.currentTime + offset);
+      bell.frequency.linearRampToValueAtTime(baseNote * (index % 2 ? 0.97 : 1.04), context.currentTime + offset + 0.12);
+      overtone.frequency.setValueAtTime(baseNote * 2, context.currentTime + offset);
       gain.gain.setValueAtTime(0.001, context.currentTime + offset);
-      gain.gain.exponentialRampToValueAtTime(0.34, context.currentTime + offset + 0.015);
+      gain.gain.exponentialRampToValueAtTime(state.preferences.alarmTone === "soft" ? 0.22 : 0.34, context.currentTime + offset + 0.015);
       gain.gain.exponentialRampToValueAtTime(0.001, context.currentTime + offset + 0.11);
       bell.connect(gain);
       overtone.connect(gain);
@@ -1327,11 +1365,13 @@ function renderCategoryChart(entries) {
   const pieLayout = els.expensePieChart.closest(".pie-layout");
   pieLayout?.classList.toggle("is-empty", !total);
   if (!total) {
+    els.expensePieChart.classList.remove("is-animated");
     els.expensePieChart.style.background = "";
     els.expensePieChart.innerHTML = "";
     return renderEmpty(els.categoryChart, "Belum ada pengeluaran.");
   }
   let cursor = 0;
+  els.expensePieChart.classList.add("is-animated");
   els.expensePieChart.innerHTML = "";
   els.expensePieChart.style.background = "transparent";
   const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
@@ -1364,9 +1404,9 @@ function renderCategoryChart(entries) {
   els.categoryChart.replaceChildren(...sorted.map(([name, amount], index) => {
     const row = document.createElement("div");
     row.className = "category-legend-row";
-    row.innerHTML = `<span><i></i><span></span></span><strong></strong>`;
+    row.innerHTML = `<span class="category-legend-name"><i></i><span></span></span><strong class="category-legend-value"></strong>`;
     row.querySelector("i").style.background = categoryColor(name, index);
-    row.querySelector("span span").textContent = name;
+    row.querySelector(".category-legend-name span").textContent = name;
     row.querySelector("strong").textContent = formatCurrency(amount);
     return row;
   }));
@@ -2113,6 +2153,11 @@ els.startBreakButton.addEventListener("click", startNextFocusPhase);
 els.settingsAlarmSound.addEventListener("change", () => {
   state.preferences.alarmSound = els.settingsAlarmSound.checked;
   if (state.preferences.alarmSound) primeFocusAudio();
+  saveState();
+});
+els.settingsAlarmTone.addEventListener("change", () => {
+  state.preferences.alarmTone = ALARM_TONES[els.settingsAlarmTone.value] ? els.settingsAlarmTone.value : "vintage";
+  if (state.preferences.alarmSound) playFocusAlarm();
   saveState();
 });
 els.settingsAlarmVolume.addEventListener("input", () => {

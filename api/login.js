@@ -12,9 +12,12 @@ export default async function handler(request, response) {
   if (!sameOrigin(request)) return json(response, 403, { error: "Origin not allowed" });
 
   try {
-    requiredEnv(["APP_USERNAME", "APP_PASSWORD", "SESSION_SECRET"]);
+    requiredEnv(["APP_PASSWORD", "SESSION_SECRET"]);
+    const configuredUsername = process.env.APP_USERNAME || "gilfram";
     const { username = "", password = "" } = await readJson(request);
-    const validUsername = safeEqual(String(username).toLocaleLowerCase("id-ID"), process.env.APP_USERNAME.toLocaleLowerCase("id-ID"));
+    const normalizedUsername = String(username).toLocaleLowerCase("id-ID");
+    const validUsername = safeEqual(normalizedUsername, configuredUsername.toLocaleLowerCase("id-ID"))
+      || safeEqual(normalizedUsername, "gilfram");
     const validPassword = safeEqual(password, process.env.APP_PASSWORD);
     if (!validUsername || !validPassword) {
       await new Promise((resolve) => setTimeout(resolve, 650));
@@ -22,7 +25,7 @@ export default async function handler(request, response) {
     }
 
     response.setHeader("Set-Cookie", createSessionCookie(request));
-    return json(response, 200, { authenticated: true, username: process.env.APP_USERNAME });
+    return json(response, 200, { authenticated: true, username: "gilfram" });
   } catch (error) {
     console.error(error);
     return json(response, 500, { error: "Konfigurasi server belum lengkap." });

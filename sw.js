@@ -1,10 +1,10 @@
-const CACHE_NAME = "onflow-shell-v12";
+const CACHE_NAME = "onflow-shell-v13";
 const APP_SHELL = [
   "/",
   "/index.html",
   "/styles.css?v=oneflow-7",
-  "/compact.css?v=onflow-15",
-  "/app.js?v=onflow-18",
+  "/compact.css?v=onflow-16",
+  "/app.js?v=onflow-19",
   "/manifest.webmanifest",
   "/assets/onflow-mark.png",
   "/assets/icon-192.png",
