@@ -1023,11 +1023,14 @@ function showFocusAlarmWidget(title, message, completedPhase) {
   document.title = `${title} · OnFlow`;
 }
 
-function dismissFocusAlarm() {
+function dismissFocusAlarm(shouldCloseFocusMode = true) {
   stopRepeatingFocusAlarm();
-  els.focusAlarmWidget.hidden = true;
+  if (els.focusAlarmWidget) els.focusAlarmWidget.hidden = true;
   document.body.classList.remove("alarm-open");
   document.title = "OnFlow";
+  if (shouldCloseFocusMode) {
+    closeFocusMode();
+  }
 }
 
 async function requestFocusNotifications() {
@@ -1120,7 +1123,7 @@ function primeFocusAudio() {
 }
 
 function startNextFocusPhase() {
-  dismissFocusAlarm();
+  dismissFocusAlarm(false);
   startFocusTimer();
 }
 
@@ -2043,16 +2046,20 @@ els.resetFocusTimer.addEventListener("click", () => {
   renderFocusTimer();
 });
 els.focusModePause.addEventListener("click", () => {
+  if (focusLocked) return;
   if (focusTimer.running) pauseFocusTimer();
   else startFocusTimer();
 });
 els.focusModeReset.addEventListener("click", () => {
+  if (focusLocked) return;
   resetFocusSession();
-  openFocusMode();
+  closeFocusMode();
   renderFocusTimer();
 });
 // --- Focus close button ---
-els.focusModeClose.addEventListener("click", closeFocusMode);
+if (els.focusModeClose) {
+  els.focusModeClose.addEventListener("click", closeFocusMode);
+}
 
 // --- Lock button: long-press to lock, long-press to unlock ---
 if (els.focusModeLock) {
