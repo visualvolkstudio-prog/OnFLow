@@ -114,11 +114,11 @@ const focusTimer = {
   completedWorkSessions: 0
 };
 const FOCUS_PRESETS = {
-  "15-3": { work: 15 * 60, break: 3 * 60, longBreak: 10 * 60, cyclesBeforeLongBreak: 4, label: "Fokus singkat 15 menit", shortLabel: "15/3" },
-  "25-5": { work: 25 * 60, break: 5 * 60, longBreak: 15 * 60, cyclesBeforeLongBreak: 4, label: "Fokus klasik 25 menit", shortLabel: "25/5" },
-  "30-5": { work: 30 * 60, break: 5 * 60, longBreak: 15 * 60, cyclesBeforeLongBreak: 4, label: "Fokus menengah 30 menit", shortLabel: "30/5" },
-  "50-10": { work: 50 * 60, break: 10 * 60, longBreak: 20 * 60, cyclesBeforeLongBreak: 2, label: "Fokus panjang 50 menit", shortLabel: "50/10" },
-  "60-15": { work: 60 * 60, break: 15 * 60, longBreak: 30 * 60, cyclesBeforeLongBreak: 2, label: "Fokus penuh 60 menit", shortLabel: "60/15" }
+  "15-3": { work: 15 * 60, break: 3 * 60, label: "Fokus singkat 15 menit", shortLabel: "15/3" },
+  "25-5": { work: 25 * 60, break: 5 * 60, label: "Fokus klasik 25 menit", shortLabel: "25/5" },
+  "30-5": { work: 30 * 60, break: 5 * 60, label: "Fokus menengah 30 menit", shortLabel: "30/5" },
+  "50-10": { work: 50 * 60, break: 10 * 60, label: "Fokus panjang 50 menit", shortLabel: "50/10" },
+  "60-15": { work: 60 * 60, break: 15 * 60, label: "Fokus penuh 60 menit", shortLabel: "60/15" }
 };
 
 const els = {
@@ -342,7 +342,9 @@ function normalizeState(saved) {
       type: TRANSACTION_TYPES[entry.type] ? entry.type : "expense",
       category: entry.category || "Lainnya",
       date: entry.date || new Date().toISOString(),
-      paymentMethod: entry.paymentMethod || "",
+      paymentMethod: ["Debit", "Kartu Kredit", "Transfer Bank"].includes(entry.paymentMethod)
+        ? "Bank"
+        : entry.paymentMethod || "",
       linkedEntityId: entry.linkedEntityId || ""
     })),
     categories,
@@ -813,7 +815,7 @@ function renderFocusTimer() {
     ? `${phaseLabel} berjalan`
     : focusTimer.phase === "work"
       ? preset.label
-      : `${focusTimer.total > preset.break ? "Istirahat panjang" : "Istirahat"} ${Math.round(focusTimer.total / 60)} menit`;
+      : `Istirahat ${Math.round(focusTimer.total / 60)} menit`;
   const progress = focusTimer.total ? 100 - ((focusTimer.remaining / focusTimer.total) * 100) : 0;
   els.focusProgress.style.width = `${Math.min(100, Math.max(0, progress))}%`;
   els.focusPresetButtons.forEach((button) => {
@@ -912,12 +914,9 @@ function completeFocusPhase() {
 function switchFocusPhase(completedPhase = focusTimer.phase) {
   const preset = FOCUS_PRESETS[focusTimer.preset];
   focusTimer.phase = completedPhase === "work" ? "break" : "work";
-  const longBreakDue = completedPhase === "work"
-    && focusTimer.completedWorkSessions > 0
-    && focusTimer.completedWorkSessions % preset.cyclesBeforeLongBreak === 0;
   focusTimer.total = focusTimer.phase === "work"
     ? preset.work
-    : longBreakDue ? preset.longBreak : preset.break;
+    : preset.break;
   focusTimer.remaining = focusTimer.total;
   focusTimer.endTime = 0;
   saveFocusTimer();
@@ -934,11 +933,22 @@ function restoreFocusTimer() {
     focusTimer.preset = saved.preset;
     focusTimer.phase = saved.phase === "break" ? "break" : "work";
     focusTimer.total = Math.max(1, Number(saved.total) || FOCUS_PRESETS[focusTimer.preset].work);
-    focusTimer.remaining = Math.max(0, Number(saved.remaining) || focusTimer.total);
+    const savedRemaining = Number(saved.remaining);
+    focusTimer.remaining = Number.isFinite(savedRemaining) ? Math.max(0, savedRemaining) : focusTimer.total;
     focusTimer.endTime = Number(saved.endTime) || 0;
     focusTimer.taskId = typeof saved.taskId === "string" ? saved.taskId : "";
     focusTimer.completedWorkSessions = Math.max(0, Number(saved.completedWorkSessions) || 0);
     focusTimer.running = Boolean(saved.running && saved.endTime);
+
+    if (focusTimer.phase === "break") {
+      const expectedBreak = FOCUS_PRESETS[focusTimer.preset].break;
+      if (focusTimer.total !== expectedBreak) {
+        focusTimer.total = expectedBreak;
+        focusTimer.remaining = Math.min(focusTimer.remaining, expectedBreak);
+        if (focusTimer.running) focusTimer.endTime = Date.now() + (focusTimer.remaining * 1000);
+        saveFocusTimer();
+      }
+    }
 
     if (focusTimer.running) {
       syncFocusRemaining();
@@ -1371,6 +1381,8 @@ function renderCategoryChart(entries) {
     return renderEmpty(els.categoryChart, "Belum ada pengeluaran.");
   }
   let cursor = 0;
+  els.expensePieChart.classList.remove("is-animated");
+  void els.expensePieChart.offsetWidth; // Force browser reflow to replay animation
   els.expensePieChart.classList.add("is-animated");
   els.expensePieChart.innerHTML = "";
   els.expensePieChart.style.background = "transparent";
@@ -1404,9 +1416,9 @@ function renderCategoryChart(entries) {
   els.categoryChart.replaceChildren(...sorted.map(([name, amount], index) => {
     const row = document.createElement("div");
     row.className = "category-legend-row";
-    row.innerHTML = `<span class="category-legend-name"><i></i><span></span></span><strong class="category-legend-value"></strong>`;
+    row.innerHTML = `<span class="category-legend-name"><i></i><span class="category-legend-text"></span></span><strong class="category-legend-value"></strong>`;
     row.querySelector("i").style.background = categoryColor(name, index);
-    row.querySelector(".category-legend-name span").textContent = name;
+    row.querySelector(".category-legend-text").textContent = name;
     row.querySelector("strong").textContent = formatCurrency(amount);
     return row;
   }));
