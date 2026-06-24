@@ -827,27 +827,33 @@ function renderFocusTimer() {
   const selectedTask = state.tasks.find((task) => task.id === focusTimer.taskId);
   const preset = FOCUS_PRESETS[focusTimer.preset];
   const phaseLabel = focusTimer.phase === "work" ? "Kerja fokus" : "Istirahat";
-  els.focusTaskLabel.textContent = selectedTask
-    ? `Sedang fokus: ${selectedTask.title}`
-    : "Pilih tugas untuk mulai.";
-  els.focusTimer.textContent = formatTimer(focusTimer.remaining);
-  els.focusStatus.textContent = focusTimer.running
-    ? `${phaseLabel} berjalan`
-    : focusTimer.phase === "work"
-      ? preset.label
-      : `Istirahat ${Math.round(focusTimer.total / 60)} menit`;
+  if (els.focusTaskLabel) {
+    els.focusTaskLabel.textContent = selectedTask
+      ? `Sedang fokus: ${selectedTask.title}`
+      : "Pilih tugas untuk mulai.";
+  }
+  if (els.focusTimer) els.focusTimer.textContent = formatTimer(focusTimer.remaining);
+  if (els.focusStatus) {
+    els.focusStatus.textContent = focusTimer.running
+      ? `${phaseLabel} berjalan`
+      : focusTimer.phase === "work"
+        ? preset.label
+        : `Istirahat ${Math.round(focusTimer.total / 60)} menit`;
+  }
   const progress = focusTimer.total ? 100 - ((focusTimer.remaining / focusTimer.total) * 100) : 0;
-  els.focusProgress.style.width = `${Math.min(100, Math.max(0, progress))}%`;
+  if (els.focusProgress) els.focusProgress.style.width = `${Math.min(100, Math.max(0, progress))}%`;
   els.focusPresetButtons.forEach((button) => {
     button.classList.toggle("active", button.dataset.focusPreset === focusTimer.preset);
   });
   els.focusPresetButtonsFs.forEach((button) => {
     button.classList.toggle("active", button.dataset.focusPreset === focusTimer.preset);
   });
-  els.startFocusTimer.innerHTML = focusTimer.running ? iconMarkup("check") : iconMarkup("play");
-  els.startFocusTimer.disabled = focusTimer.running;
-  els.startFocusTimer.ariaLabel = focusTimer.running ? "Fokus sedang berjalan" : "Mulai fokus";
-  els.startFocusTimer.title = focusTimer.running ? "Berjalan" : "Mulai";
+  if (els.startFocusTimer) {
+    els.startFocusTimer.innerHTML = focusTimer.running ? iconMarkup("check") : iconMarkup("play");
+    els.startFocusTimer.disabled = focusTimer.running;
+    els.startFocusTimer.ariaLabel = focusTimer.running ? "Fokus sedang berjalan" : "Mulai fokus";
+    els.startFocusTimer.title = focusTimer.running ? "Berjalan" : "Mulai";
+  }
   renderFocusMode({ selectedTask, phaseLabel, progress });
 }
 
@@ -2228,9 +2234,9 @@ els.focusPresetButtons.forEach((button) => {
   });
 });
 
-els.startFocusTimer.addEventListener("click", startFocusTimer);
-els.pauseFocusTimer.addEventListener("click", pauseFocusTimer);
-els.resetFocusTimer.addEventListener("click", () => {
+els.startFocusTimer?.addEventListener("click", startFocusTimer);
+els.pauseFocusTimer?.addEventListener("click", pauseFocusTimer);
+els.resetFocusTimer?.addEventListener("click", () => {
   resetFocusSession();
   renderFocusTimer();
 });
