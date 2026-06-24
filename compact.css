@@ -1709,32 +1709,12 @@ html[data-theme="dark"] input::placeholder {
 
 /* Keep the focus timer compact even when the habits list grows. */
 .daily-top-grid {
+  grid-template-columns: minmax(0, 1fr);
   align-items: start;
 }
 
 .focus-panel {
-  align-self: start;
-  height: fit-content;
-  min-height: 0 !important;
-}
-
-.focus-panel .focus-timer-card {
-  display: block;
-  padding: 0;
-  border: 0;
-  background: transparent;
-  box-shadow: none;
-}
-
-.focus-panel .focus-time,
-.focus-panel .focus-status,
-.focus-panel .focus-progress,
-.focus-panel .focus-actions {
   display: none;
-}
-
-.focus-panel .focus-mode-switch {
-  margin-top: 12px;
 }
 
 .task-group-list .item-main[role="button"] {
