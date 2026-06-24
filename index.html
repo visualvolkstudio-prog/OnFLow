@@ -9,7 +9,7 @@
     <link rel="manifest" href="manifest.webmanifest">
     <link rel="icon" href="assets/onflow-mark.png" type="image/png">
     <link rel="stylesheet" href="styles.css?v=oneflow-7">
-    <link rel="stylesheet" href="compact.css?v=onflow-16">
+    <link rel="stylesheet" href="compact.css?v=onflow-18">
   </head>
   <body class="is-workspace access-locked auth-checking">
     <svg class="icon-sprite" aria-hidden="true">
@@ -213,8 +213,8 @@
         <section class="daily-top-grid">
           <article class="panel focus-panel">
             <div class="focus-copy">
-              <h2>Fokus</h2>
-              <p id="focusTaskLabel">Pilih tugas untuk mulai.</p>
+              <h2>Mode Fokus</h2>
+              <p id="focusTaskLabel">Pilih durasi, lalu buka dari tugas.</p>
             </div>
             <div class="focus-timer-card">
               <div class="focus-mode-switch" role="group" aria-label="Preset fokus">
@@ -287,6 +287,20 @@
             <button type="button" id="startBreakButton">Mulai Istirahat</button>
             <button class="ghost-button" type="button" id="dismissFocusAlarm">Tutup Alarm</button>
           </div>
+        </div>
+      </div>
+
+      <div class="task-reminder" id="taskReminder" role="status" aria-live="polite" hidden>
+        <div class="task-reminder-icon"><svg class="ui-icon" aria-hidden="true"><use href="#icon-bell"/></svg></div>
+        <div class="task-reminder-copy">
+          <span id="taskReminderKicker">Reminder tugas</span>
+          <strong id="taskReminderTitle">Tugas akan dimulai</strong>
+          <p id="taskReminderMessage">Siapkan fokus sebentar lagi.</p>
+        </div>
+        <div class="task-reminder-actions">
+          <button class="icon-only" id="taskReminderFocus" type="button" aria-label="Mulai fokus" title="Mulai fokus"><svg class="ui-icon" aria-hidden="true"><use href="#icon-play"/></svg></button>
+          <button class="ghost-button icon-only" id="taskReminderDone" type="button" aria-label="Tandai selesai" title="Tandai selesai"><svg class="ui-icon" aria-hidden="true"><use href="#icon-check"/></svg></button>
+          <button class="ghost-button icon-only" id="taskReminderClose" type="button" aria-label="Tutup reminder" title="Tutup"><svg class="ui-icon" aria-hidden="true"><use href="#icon-x"/></svg></button>
         </div>
       </div>
 
@@ -664,6 +678,6 @@
       </div>
     </div>
 
-    <script src="app.js?v=onflow-20"></script>
+    <script src="app.js?v=onflow-22"></script>
   </body>
 </html>

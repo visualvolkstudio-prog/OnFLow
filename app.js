@@ -3,6 +3,7 @@ const ACCESS_KEY = "onflow.localAccess.v1";
 const SESSION_KEY = "onflow.unlocked";
 const PENDING_SYNC_KEY = `${STORAGE_KEY}.pendingSync`;
 const FOCUS_TIMER_KEY = `${STORAGE_KEY}.focusTimer`;
+const TASK_REMINDER_KEY = `${STORAGE_KEY}.taskReminders`;
 const DEFAULT_USERNAME = "gilfram";
 const MONTH_NAMES = ["Jan", "Feb", "Mar", "Apr", "Mei", "Jun", "Jul", "Agu", "Sep", "Okt", "Nov", "Des"];
 const TRANSACTION_TYPES = {
@@ -103,6 +104,9 @@ let plannerDateValue = formatDateInputStatic(new Date());
 let focusLocked = false;
 let lockHoldTimer = null;
 let _confirmResolve = null;
+let taskReminderTimer = null;
+let activeTaskReminderId = "";
+let taskReminderHideTimer = null;
 const focusTimer = {
   preset: "25-5",
   phase: "work",
@@ -172,6 +176,13 @@ const els = {
   focusAlarmMessage: document.querySelector("#focusAlarmMessage"),
   dismissFocusAlarm: document.querySelector("#dismissFocusAlarm"),
   startBreakButton: document.querySelector("#startBreakButton"),
+  taskReminder: document.querySelector("#taskReminder"),
+  taskReminderKicker: document.querySelector("#taskReminderKicker"),
+  taskReminderTitle: document.querySelector("#taskReminderTitle"),
+  taskReminderMessage: document.querySelector("#taskReminderMessage"),
+  taskReminderFocus: document.querySelector("#taskReminderFocus"),
+  taskReminderDone: document.querySelector("#taskReminderDone"),
+  taskReminderClose: document.querySelector("#taskReminderClose"),
   habitForm: document.querySelector("#habitForm"),
   habitName: document.querySelector("#habitName"),
   habitList: document.querySelector("#habitList"),
@@ -771,9 +782,18 @@ function renderTasks() {
     });
     const main = document.createElement("div");
     main.className = "item-main";
+    main.role = "button";
+    main.tabIndex = 0;
     main.innerHTML = `<span class="item-title"></span><span class="item-meta"><span></span><span class="pill"></span></span>`;
     main.querySelector(".item-title").textContent = task.title;
     main.querySelector(".item-meta > span").textContent = task.time || "Tanpa jam";
+    main.addEventListener("click", () => selectFocusTask(task.id, true));
+    main.addEventListener("keydown", (event) => {
+      if (event.key === "Enter" || event.key === " ") {
+        event.preventDefault();
+        selectFocusTask(task.id, true);
+      }
+    });
     const pill = main.querySelector(".pill");
     pill.textContent = task.priority;
     pill.classList.add(priorityClass(task.priority));
@@ -1097,6 +1117,15 @@ function sendFocusNotification(title, message) {
   });
 }
 
+function sendTaskNotification(title, message, taskId) {
+  if (!("Notification" in window) || Notification.permission !== "granted") return;
+  new Notification(title, {
+    body: message,
+    tag: `onflow-task-${taskId}`,
+    renotify: true
+  });
+}
+
 function vibrateFocusAlarm() {
   if ("vibrate" in navigator) navigator.vibrate([350, 160, 350, 160, 650]);
 }
@@ -1168,6 +1197,96 @@ function primeFocusAudio() {
   } catch {
     return null;
   }
+}
+
+function getTaskReminderLog() {
+  try {
+    const parsed = JSON.parse(localStorage.getItem(TASK_REMINDER_KEY) || "{}");
+    return parsed && typeof parsed === "object" ? parsed : {};
+  } catch {
+    return {};
+  }
+}
+
+function saveTaskReminderLog(log) {
+  const entries = Object.entries(log).slice(-140);
+  localStorage.setItem(TASK_REMINDER_KEY, JSON.stringify(Object.fromEntries(entries)));
+}
+
+function getTaskStartDate(task, date = new Date()) {
+  if (!task?.time || !/^\d{2}:\d{2}$/.test(task.time)) return null;
+  const [hours, minutes] = task.time.split(":").map(Number);
+  const startDate = new Date(date);
+  startDate.setHours(hours, minutes, 0, 0);
+  return startDate;
+}
+
+function taskReminderKey(task, type, date = new Date()) {
+  return `${formatDateInput(date)}:${task.id}:${type}`;
+}
+
+function markTaskReminderShown(task, type) {
+  const log = getTaskReminderLog();
+  log[taskReminderKey(task, type)] = Date.now();
+  saveTaskReminderLog(log);
+}
+
+function hasTaskReminderShown(task, type) {
+  return Boolean(getTaskReminderLog()[taskReminderKey(task, type)]);
+}
+
+function checkTaskReminders() {
+  if (document.body.classList.contains("access-locked")) return;
+  const now = new Date();
+  state.tasks
+    .filter((task) => !task.done && task.time)
+    .forEach((task) => {
+      const startDate = getTaskStartDate(task, now);
+      if (!startDate) return;
+      const diffMs = startDate.getTime() - now.getTime();
+      if (diffMs > 0 && diffMs <= 5 * 60 * 1000 && !hasTaskReminderShown(task, "soon")) {
+        markTaskReminderShown(task, "soon");
+        showTaskReminder(task, "soon", Math.max(1, Math.ceil(diffMs / 60000)));
+      }
+      if (diffMs <= 0 && diffMs > -70 * 1000 && !hasTaskReminderShown(task, "start")) {
+        markTaskReminderShown(task, "start");
+        showTaskReminder(task, "start");
+      }
+    });
+}
+
+function showTaskReminder(task, type, minutesLeft = 5) {
+  if (!els.taskReminder) return;
+  activeTaskReminderId = task.id;
+  const title = type === "start" ? "Tugas dimulai sekarang" : "Tugas segera dimulai";
+  const message = type === "start"
+    ? `${task.title} dimulai pukul ${task.time}.`
+    : `${task.title} mulai dalam ${minutesLeft} menit.`;
+  els.taskReminderKicker.textContent = task.type === "project" ? "Proyek kerja" : "Aktivitas harian";
+  els.taskReminderTitle.textContent = title;
+  els.taskReminderMessage.textContent = message;
+  els.taskReminder.hidden = false;
+  els.taskReminder.classList.remove("is-leaving");
+  window.clearTimeout(taskReminderHideTimer);
+  taskReminderHideTimer = window.setTimeout(hideTaskReminder, type === "start" ? 18000 : 14000);
+  sendTaskNotification(title, message, task.id);
+  if ("vibrate" in navigator) navigator.vibrate(type === "start" ? [180, 90, 180] : 120);
+}
+
+function hideTaskReminder() {
+  if (!els.taskReminder || els.taskReminder.hidden) return;
+  els.taskReminder.classList.add("is-leaving");
+  window.clearTimeout(taskReminderHideTimer);
+  taskReminderHideTimer = window.setTimeout(() => {
+    els.taskReminder.hidden = true;
+    els.taskReminder.classList.remove("is-leaving");
+  }, 180);
+}
+
+function startTaskReminderScheduler() {
+  if (taskReminderTimer) window.clearInterval(taskReminderTimer);
+  checkTaskReminders();
+  taskReminderTimer = window.setInterval(checkTaskReminders, 30000);
 }
 
 function startNextFocusPhase() {
@@ -2031,11 +2150,29 @@ els.taskForm.addEventListener("submit", (event) => {
   els.taskForm.reset();
   els.taskPriority.value = "Sedang";
   render();
+  checkTaskReminders();
 });
 
 els.clearDoneTasks.addEventListener("click", () => {
   state.tasks = state.tasks.filter((task) => !task.done);
   render();
+});
+
+els.taskReminderClose?.addEventListener("click", hideTaskReminder);
+els.taskReminderFocus?.addEventListener("click", () => {
+  if (!activeTaskReminderId) return hideTaskReminder();
+  hideTaskReminder();
+  selectFocusTask(activeTaskReminderId, true);
+  setActiveTab("daily");
+});
+els.taskReminderDone?.addEventListener("click", () => {
+  const task = state.tasks.find((entry) => entry.id === activeTaskReminderId);
+  if (task) {
+    task.done = true;
+    task.completedAt = new Date().toISOString();
+    render();
+  }
+  hideTaskReminder();
 });
 
 // Planner date picker handlers
@@ -2417,6 +2554,8 @@ async function initializeApp() {
       if (remoteSession) {
         if (session.username) localStorage.setItem(ACCESS_KEY, JSON.stringify({ username: session.username }));
         unlockWorkspace();
+        requestFocusNotifications();
+        startTaskReminderScheduler();
         hydrateCloudState().catch((error) => {
           console.error(error);
           cloudReady = false;
@@ -2448,11 +2587,14 @@ async function initializeApp() {
 
 initializeApp();
 window.setInterval(updateHeaderClock, 1000);
+startTaskReminderScheduler();
 document.addEventListener("visibilitychange", () => {
   if (focusTimer.running) tickFocusTimer();
+  checkTaskReminders();
 });
 window.addEventListener("focus", () => {
   if (focusTimer.running) tickFocusTimer();
+  checkTaskReminders();
 });
 window.addEventListener("online", () => {
   if (remoteSession && cloudReady) syncCloudState();
