@@ -106,6 +106,7 @@ let lockHoldTimer = null;
 let _confirmResolve = null;
 let taskReminderTimer = null;
 let activeTaskReminderId = "";
+let activePlannerReminderId = "";
 let taskReminderHideTimer = null;
 const focusTimer = {
   preset: "25-5",
@@ -124,6 +125,13 @@ const FOCUS_PRESETS = {
   "50-10": { work: 50 * 60, break: 10 * 60, label: "Fokus panjang 50 menit", shortLabel: "50/10" },
   "60-15": { work: 60 * 60, break: 15 * 60, label: "Fokus penuh 60 menit", shortLabel: "60/15" }
 };
+const FOCUS_LINES = [
+  "Satu hal dulu. Pelan, rapi, selesai.",
+  "Tetap di sini. Kerjakan bagian kecil berikutnya.",
+  "Tarik napas. Lanjutkan dengan tenang.",
+  "Jangan pindah layar dulu. Selesaikan langkah ini.",
+  "Fokus bukan buru-buru. Fokus itu tetap kembali."
+];
 
 const els = {
   accessGate: document.querySelector("#accessGate"),
@@ -153,6 +161,10 @@ const els = {
   taskPriority: document.querySelector("#taskPriority"),
   taskList: document.querySelector("#taskList"),
   clearDoneTasks: document.querySelector("#clearDoneTasks"),
+  plannerReminderBar: document.querySelector("#plannerReminderBar"),
+  plannerReminderTitle: document.querySelector("#plannerReminderTitle"),
+  plannerReminderText: document.querySelector("#plannerReminderText"),
+  plannerReminderFocus: document.querySelector("#plannerReminderFocus"),
   focusTaskLabel: document.querySelector("#focusTaskLabel"),
   focusTimer: document.querySelector("#focusTimer"),
   focusStatus: document.querySelector("#focusStatus"),
@@ -167,6 +179,7 @@ const els = {
   focusModeTimer: document.querySelector("#focusModeTimer"),
   focusModePhase: document.querySelector("#focusModePhase"),
   focusModeTask: document.querySelector("#focusModeTask"),
+  focusModeMarquee: document.querySelector("#focusModeMarquee"),
   focusModeProgress: document.querySelector("#focusModeProgress"),
   focusModePause: document.querySelector("#focusModePause"),
   focusModeReset: document.querySelector("#focusModeReset"),
@@ -646,6 +659,7 @@ function render() {
   }
 
   renderTasks();
+  renderPlannerReminder();
   renderFocusTimer();
   renderHabits();
   renderCashflowControls();
@@ -744,6 +758,7 @@ function navigateWorkspace(target) {
 }
 
 function renderTasks() {
+  const now = new Date();
   const sorted = [...state.tasks].sort((a, b) => Number(a.done) - Number(b.done) || (a.time || "99:99").localeCompare(b.time || "99:99"));
   els.taskCount.textContent = state.tasks.filter((task) => !task.done).length;
   if (!sorted.length) return renderEmpty(els.taskList);
@@ -769,7 +784,8 @@ function renderTasks() {
     } else {
       list.append(...tasks.map((task) => {
     const item = document.createElement("div");
-    item.className = `list-item${task.done ? " done" : ""}`;
+    const reminderStatus = getTaskReminderStatus(task, now);
+    item.className = `list-item${task.done ? " done" : ""}${reminderStatus ? ` ${reminderStatus}` : ""}`;
     const checkbox = document.createElement("input");
     checkbox.className = "check";
     checkbox.type = "checkbox";
@@ -784,9 +800,9 @@ function renderTasks() {
     main.className = "item-main";
     main.role = "button";
     main.tabIndex = 0;
-    main.innerHTML = `<span class="item-title"></span><span class="item-meta"><span></span><span class="pill"></span></span>`;
+    main.innerHTML = `<span class="item-title"></span><span class="item-meta"><span class="task-time-meta"><svg class="ui-icon" aria-hidden="true"><use href="#icon-bell"></use></svg><span></span></span><span class="pill"></span></span>`;
     main.querySelector(".item-title").textContent = task.title;
-    main.querySelector(".item-meta > span").textContent = task.time || "Tanpa jam";
+    main.querySelector(".task-time-meta span").textContent = task.time || "Tanpa jam";
     main.addEventListener("click", () => selectFocusTask(task.id, true));
     main.addEventListener("keydown", (event) => {
       if (event.key === "Enter" || event.key === " ") {
@@ -820,6 +836,46 @@ function renderTasks() {
     return group;
   });
   els.taskList.replaceChildren(...groups);
+}
+
+function getTaskReminderStatus(task, date = new Date()) {
+  if (task.done || !task.time) return "";
+  const startDate = getTaskStartDate(task, date);
+  if (!startDate) return "";
+  const diffMs = startDate.getTime() - date.getTime();
+  if (diffMs > 0 && diffMs <= 5 * 60 * 1000) return "due-soon";
+  if (diffMs <= 0 && diffMs > -70 * 1000) return "due-now";
+  return "";
+}
+
+function getUpcomingTaskReminder(date = new Date()) {
+  return state.tasks
+    .filter((task) => !task.done && task.time)
+    .map((task) => {
+      const startDate = getTaskStartDate(task, date);
+      if (!startDate) return null;
+      const diffMs = startDate.getTime() - date.getTime();
+      if (diffMs > 0 && diffMs <= 5 * 60 * 1000) return { task, diffMs, type: "soon" };
+      if (diffMs <= 0 && diffMs > -70 * 1000) return { task, diffMs, type: "start" };
+      return null;
+    })
+    .filter(Boolean)
+    .sort((a, b) => a.diffMs - b.diffMs)[0] || null;
+}
+
+function renderPlannerReminder() {
+  if (!els.plannerReminderBar) return;
+  const reminder = getUpcomingTaskReminder();
+  if (!reminder) {
+    activePlannerReminderId = "";
+    els.plannerReminderBar.hidden = true;
+    return;
+  }
+  activePlannerReminderId = reminder.task.id;
+  const minutesLeft = Math.max(1, Math.ceil(reminder.diffMs / 60000));
+  els.plannerReminderTitle.textContent = reminder.type === "start" ? "Tugas dimulai sekarang" : `Mulai ${minutesLeft} menit lagi`;
+  els.plannerReminderText.textContent = `${reminder.task.title} · ${reminder.task.time}`;
+  els.plannerReminderBar.hidden = false;
 }
 
 function renderFocusTimer() {
@@ -1002,6 +1058,15 @@ function renderFocusMode(context = {}) {
   els.focusModeTask.textContent = selectedTask
     ? selectedTask.title
     : focusTimer.phase === "work" ? "Tetap fokus, satu hal dulu." : "Tarik napas sebentar.";
+  if (els.focusModeMarquee) {
+    const line = focusTimer.phase === "work"
+      ? FOCUS_LINES[(focusTimer.completedWorkSessions + Math.floor(Date.now() / 60000)) % FOCUS_LINES.length]
+      : "Istirahat sebentar. Balik lagi dengan kepala lebih ringan.";
+    const marqueeText = `${line}   •   ${line}`;
+    if (els.focusModeMarquee.textContent !== marqueeText) {
+      els.focusModeMarquee.textContent = marqueeText;
+    }
+  }
   els.focusModeProgress.style.width = `${Math.min(100, Math.max(0, progress))}%`;
   els.focusModePause.innerHTML = focusTimer.running ? iconMarkup("pause") : iconMarkup("play");
   els.focusModePause.ariaLabel = focusTimer.running ? "Jeda fokus" : "Lanjut fokus";
@@ -1244,6 +1309,7 @@ function hasTaskReminderShown(task, type) {
 function checkTaskReminders() {
   if (document.body.classList.contains("access-locked")) return;
   const now = new Date();
+  renderPlannerReminder();
   state.tasks
     .filter((task) => !task.done && task.time)
     .forEach((task) => {
@@ -1274,7 +1340,7 @@ function showTaskReminder(task, type, minutesLeft = 5) {
   els.taskReminder.hidden = false;
   els.taskReminder.classList.remove("is-leaving");
   window.clearTimeout(taskReminderHideTimer);
-  taskReminderHideTimer = window.setTimeout(hideTaskReminder, type === "start" ? 18000 : 14000);
+  taskReminderHideTimer = window.setTimeout(hideTaskReminder, type === "start" ? 24000 : 20000);
   sendTaskNotification(title, message, task.id);
   if ("vibrate" in navigator) navigator.vibrate(type === "start" ? [180, 90, 180] : 120);
 }
@@ -1292,7 +1358,7 @@ function hideTaskReminder() {
 function startTaskReminderScheduler() {
   if (taskReminderTimer) window.clearInterval(taskReminderTimer);
   checkTaskReminders();
-  taskReminderTimer = window.setInterval(checkTaskReminders, 30000);
+  taskReminderTimer = window.setInterval(checkTaskReminders, 10000);
 }
 
 function startNextFocusPhase() {
@@ -2179,6 +2245,11 @@ els.taskReminderDone?.addEventListener("click", () => {
     render();
   }
   hideTaskReminder();
+});
+els.plannerReminderFocus?.addEventListener("click", () => {
+  if (!activePlannerReminderId) return;
+  selectFocusTask(activePlannerReminderId, true);
+  setActiveTab("daily");
 });
 
 // Planner date picker handlers

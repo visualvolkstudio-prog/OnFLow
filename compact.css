@@ -155,9 +155,26 @@
 .panel-heading h2,
 .habit-panel h2,
 .task-panel h2 {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
   margin: 0;
   font-size: 1rem;
   line-height: 1.25;
+}
+
+.daily-summary .metric span {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+}
+
+.daily-summary .ui-icon,
+.panel-heading h2 .ui-icon {
+  width: 15px;
+  height: 15px;
+  color: var(--green);
+  stroke-width: 2.25;
 }
 
 .home-card,
@@ -807,9 +824,80 @@ body.auth-checking .access-card::after {
   background: var(--panel-bg);
 }
 
+.task-group-list .list-item.due-soon,
+.task-group-list .list-item.due-now {
+  border-color: rgba(221, 174, 55, 0.42);
+  background: linear-gradient(135deg, rgba(221, 174, 55, 0.13), rgba(255, 255, 255, 0.96));
+  box-shadow: inset 3px 0 0 rgba(221, 174, 55, 0.78);
+}
+
+.task-group-list .list-item.due-now {
+  border-color: rgba(221, 83, 69, 0.36);
+  background: linear-gradient(135deg, rgba(221, 83, 69, 0.11), rgba(255, 255, 255, 0.96));
+  box-shadow: inset 3px 0 0 rgba(221, 83, 69, 0.78);
+}
+
+.task-time-meta {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.task-time-meta .ui-icon {
+  width: 12px;
+  height: 12px;
+  color: var(--copy-muted);
+}
+
 .task-group-empty {
   padding: 14px 6px;
   text-align: center;
+}
+
+.planner-reminder-bar[hidden] {
+  display: none;
+}
+
+.planner-reminder-bar {
+  display: grid;
+  grid-template-columns: 36px minmax(0, 1fr) 40px;
+  align-items: center;
+  gap: 12px;
+  margin: -2px 0 12px;
+  border: 1px solid rgba(221, 174, 55, 0.35);
+  border-radius: 16px;
+  padding: 11px 12px;
+  background: linear-gradient(135deg, rgba(221, 174, 55, 0.14), rgba(255, 255, 255, 0.82));
+  box-shadow: 0 16px 40px rgba(31, 49, 41, 0.06);
+}
+
+.planner-reminder-bar > .ui-icon {
+  justify-self: center;
+  width: 20px;
+  height: 20px;
+  color: #9b6f00;
+}
+
+.planner-reminder-bar div {
+  min-width: 0;
+}
+
+.planner-reminder-bar strong,
+.planner-reminder-bar span {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.planner-reminder-bar strong {
+  font-size: 0.84rem;
+}
+
+.planner-reminder-bar span {
+  margin-top: 2px;
+  color: var(--copy-muted);
+  font-size: 0.76rem;
 }
 
 .task-reminder[hidden] {
@@ -1602,6 +1690,20 @@ html[data-theme="dark"] .task-group-list .list-item {
   background: var(--panel-soft);
 }
 
+html[data-theme="dark"] .task-group-list .list-item.due-soon,
+html[data-theme="dark"] .task-group-list .list-item.due-now {
+  background: linear-gradient(135deg, rgba(221, 174, 55, 0.13), rgba(20, 26, 23, 0.96));
+}
+
+html[data-theme="dark"] .task-group-list .list-item.due-now {
+  background: linear-gradient(135deg, rgba(221, 83, 69, 0.13), rgba(20, 26, 23, 0.96));
+}
+
+html[data-theme="dark"] .planner-reminder-bar {
+  border-color: rgba(221, 174, 55, 0.28);
+  background: linear-gradient(135deg, rgba(221, 174, 55, 0.13), rgba(25, 32, 28, 0.94));
+}
+
 html[data-theme="dark"] .cashflow-period-button,
 html[data-theme="dark"] .cashflow-net strong,
 html[data-theme="dark"] .focus-time,
@@ -1794,6 +1896,35 @@ html[data-theme="dark"] input::placeholder {
   font-weight: 700;
 }
 
+.focus-mode-marquee {
+  width: min(760px, 88vw);
+  overflow: hidden;
+  border-block: 1px solid rgba(47, 111, 94, 0.14);
+  padding: 10px 0;
+  color: rgba(47, 111, 94, 0.86);
+  mask-image: linear-gradient(90deg, transparent, #000 12%, #000 88%, transparent);
+}
+
+.focus-mode-marquee span {
+  display: inline-block;
+  min-width: 100%;
+  white-space: nowrap;
+  font-family: "Switzer Heading", "Switzer", ui-sans-serif, system-ui, sans-serif;
+  font-size: clamp(0.95rem, 2vw, 1.35rem);
+  font-style: italic;
+  font-weight: 800;
+  animation: focusTextRun 18s linear infinite;
+}
+
+@keyframes focusTextRun {
+  from {
+    transform: translateX(35%);
+  }
+  to {
+    transform: translateX(-100%);
+  }
+}
+
 .focus-mode-progress {
   width: min(680px, 84vw);
   height: 8px;
@@ -1838,6 +1969,11 @@ html[data-theme="dark"] .focus-mode-overlay {
 html[data-theme="dark"] .focus-mode-time,
 html[data-theme="dark"] .focus-mode-content p {
   color: var(--copy);
+}
+
+html[data-theme="dark"] .focus-mode-marquee {
+  border-color: rgba(120, 190, 167, 0.16);
+  color: var(--accent-strong);
 }
 
 html[data-theme="dark"] .focus-mode-actions button {

@@ -9,7 +9,7 @@
     <link rel="manifest" href="manifest.webmanifest">
     <link rel="icon" href="assets/onflow-mark.png" type="image/png">
     <link rel="stylesheet" href="styles.css?v=oneflow-7">
-    <link rel="stylesheet" href="compact.css?v=onflow-19">
+    <link rel="stylesheet" href="compact.css?v=onflow-20">
   </head>
   <body class="is-workspace access-locked auth-checking">
     <svg class="icon-sprite" aria-hidden="true">
@@ -201,20 +201,29 @@
 
         <section class="summary-grid daily-summary" aria-label="Ringkasan planner harian">
           <article class="metric">
-            <span>Tugas hari ini</span>
+            <span><svg class="ui-icon" aria-hidden="true"><use href="#icon-check"/></svg>Tugas hari ini</span>
             <strong id="taskCount">0</strong>
           </article>
           <article class="metric">
-            <span>Kebiasaan selesai</span>
+            <span><svg class="ui-icon" aria-hidden="true"><use href="#icon-target"/></svg>Kebiasaan selesai</span>
             <strong id="habitCount">0/0</strong>
           </article>
         </section>
+
+        <div class="planner-reminder-bar" id="plannerReminderBar" hidden>
+          <svg class="ui-icon" aria-hidden="true"><use href="#icon-bell"/></svg>
+          <div>
+            <strong id="plannerReminderTitle">Tugas segera dimulai</strong>
+            <span id="plannerReminderText">Siapkan fokus sebentar lagi.</span>
+          </div>
+          <button class="icon-only" id="plannerReminderFocus" type="button" aria-label="Mulai fokus" title="Mulai fokus"><svg class="ui-icon" aria-hidden="true"><use href="#icon-play"/></svg></button>
+        </div>
 
         <section class="daily-top-grid">
           <article class="panel habit-panel">
             <div class="panel-heading">
               <div>
-                <h2>Kebiasaan</h2>
+                <h2><svg class="ui-icon" aria-hidden="true"><use href="#icon-target"/></svg>Kebiasaan</h2>
               </div>
             </div>
 
@@ -230,7 +239,7 @@
         <article class="panel task-panel">
           <div class="panel-heading">
             <div>
-              <h2>Tugas Harian</h2>
+              <h2><svg class="ui-icon" aria-hidden="true"><use href="#icon-check"/></svg>Tugas Harian</h2>
             </div>
             <button class="ghost-button icon-only" id="clearDoneTasks" type="button" aria-label="Bersihkan tugas selesai" title="Bersihkan tugas selesai"><svg class="ui-icon" aria-hidden="true"><use href="#icon-trash"/></svg></button>
           </div>
@@ -288,6 +297,7 @@
           <span class="focus-mode-kicker" id="focusModePhase">Kerja fokus</span>
           <strong class="focus-mode-time" id="focusModeTimer">25:00</strong>
           <p id="focusModeTask">Pilih tugas untuk mulai.</p>
+          <div class="focus-mode-marquee" aria-live="polite"><span id="focusModeMarquee">Satu hal dulu. Pelan, rapi, selesai.</span></div>
           <div class="focus-mode-progress" aria-hidden="true"><span id="focusModeProgress"></span></div>
           <div class="focus-mode-presets-fs" role="group" aria-label="Preset fokus">
             <button class="focus-preset-fs" type="button" data-focus-preset="15-3" title="Fokus singkat: 15 menit fokus, 3 menit istirahat">15/3</button>
@@ -654,6 +664,6 @@
       </div>
     </div>
 
-    <script src="app.js?v=onflow-23"></script>
+    <script src="app.js?v=onflow-25"></script>
   </body>
 </html>
