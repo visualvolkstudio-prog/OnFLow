@@ -17,25 +17,29 @@ export default async function handler(request, response) {
 
   try {
     if (request.method === "GET") {
-      const result = await supabaseRequest(`app_state?id=eq.${stateId()}&select=state`);
+      const result = await supabaseRequest(`app_state?id=eq.${stateId()}&select=state,updated_at`);
       const rows = await result.json();
-      return json(response, 200, { state: rows[0]?.state || null });
+      return json(response, 200, {
+        state: rows[0]?.state || null,
+        updatedAt: rows[0]?.updated_at || null
+      });
     }
 
     const body = await readJson(request);
     if (!body.state || typeof body.state !== "object" || Array.isArray(body.state)) {
       return json(response, 400, { error: "State tidak valid." });
     }
+    const updatedAt = new Date().toISOString();
     await supabaseRequest("app_state?on_conflict=id", {
       method: "POST",
       headers: { Prefer: "resolution=merge-duplicates,return=minimal" },
       body: JSON.stringify({
         id: process.env.APP_STATE_ID || "primary",
         state: body.state,
-        updated_at: new Date().toISOString()
+        updated_at: updatedAt
       })
     });
-    return json(response, 200, { saved: true });
+    return json(response, 200, { saved: true, updatedAt });
   } catch (error) {
     console.error(error);
     return json(response, 502, { error: "Penyimpanan cloud sedang tidak tersedia." });

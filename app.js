@@ -99,6 +99,8 @@ let serverAuthAvailable = false;
 let remoteSession = false;
 let cloudReady = false;
 let cloudSaveTimer = null;
+let cloudRefreshTimer = null;
+let cloudUpdatedAt = "";
 let cloudSyncStatus = "Data tersimpan di perangkat ini.";
 let plannerDateValue = formatDateInputStatic(new Date());
 let focusLocked = false;
@@ -108,6 +110,7 @@ let taskReminderTimer = null;
 let activeTaskReminderId = "";
 let activePlannerReminderId = "";
 let taskReminderHideTimer = null;
+let hydratingCloud = false;
 const focusTimer = {
   preset: "25-5",
   phase: "work",
@@ -389,7 +392,7 @@ function normalizeState(saved) {
 
 function saveState() {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
-  if (remoteSession && cloudReady) queueCloudSave();
+  if (remoteSession && cloudReady && !hydratingCloud) queueCloudSave();
 }
 
 function queueCloudSave() {
@@ -421,10 +424,11 @@ async function syncCloudState() {
   if (!remoteSession || !cloudReady) return;
   const stateSnapshot = JSON.stringify(state);
   try {
-    await apiRequest("/api/state", {
+    const result = await apiRequest("/api/state", {
       method: "PUT",
       body: JSON.stringify({ state: JSON.parse(stateSnapshot) })
     });
+    if (result.updatedAt) cloudUpdatedAt = result.updatedAt;
     if (localStorage.getItem(PENDING_SYNC_KEY) === stateSnapshot) {
       localStorage.removeItem(PENDING_SYNC_KEY);
     }
@@ -439,6 +443,7 @@ async function syncCloudState() {
 async function hydrateCloudState() {
   cloudReady = false;
   const result = await apiRequest("/api/state");
+  cloudUpdatedAt = result.updatedAt || "";
   let pendingState = null;
   try {
     const pendingRaw = localStorage.getItem(PENDING_SYNC_KEY);
@@ -457,7 +462,40 @@ async function hydrateCloudState() {
   cloudReady = true;
   if (pendingState || !result.state) await syncCloudState();
   cloudSyncStatus = "Tersinkron aman ke cloud.";
-  render();
+  hydratingCloud = true;
+  try {
+    render();
+  } finally {
+    hydratingCloud = false;
+  }
+  startCloudRealtimeSync();
+}
+
+async function refreshCloudState() {
+  if (!remoteSession || !cloudReady || localStorage.getItem(PENDING_SYNC_KEY)) return;
+  try {
+    const result = await apiRequest("/api/state");
+    if (!result.state || !result.updatedAt || result.updatedAt === cloudUpdatedAt) return;
+    if (cloudUpdatedAt && new Date(result.updatedAt).getTime() <= new Date(cloudUpdatedAt).getTime()) return;
+    state = normalizeState(result.state);
+    cloudUpdatedAt = result.updatedAt;
+    cloudSyncStatus = "Data terbaru dimuat dari cloud.";
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+    hydratingCloud = true;
+    try {
+      render();
+    } finally {
+      hydratingCloud = false;
+    }
+  } catch (error) {
+    console.error(error);
+  }
+}
+
+function startCloudRealtimeSync() {
+  if (cloudRefreshTimer) window.clearInterval(cloudRefreshTimer);
+  if (!remoteSession || !cloudReady) return;
+  cloudRefreshTimer = window.setInterval(refreshCloudState, 15000);
 }
 
 function getAccessProfile() {
@@ -802,7 +840,7 @@ function renderTasks() {
     main.tabIndex = 0;
     main.innerHTML = `<span class="item-title"></span><span class="item-meta"><span class="task-time-meta"><svg class="ui-icon" aria-hidden="true"><use href="#icon-bell"></use></svg><span></span></span><span class="pill"></span></span>`;
     main.querySelector(".item-title").textContent = task.title;
-    main.querySelector(".task-time-meta span").textContent = task.time || "Tanpa jam";
+    main.querySelector(".task-time-meta span").textContent = getTaskTimeLabel(task, reminderStatus);
     main.addEventListener("click", () => selectFocusTask(task.id, true));
     main.addEventListener("keydown", (event) => {
       if (event.key === "Enter" || event.key === " ") {
@@ -845,7 +883,16 @@ function getTaskReminderStatus(task, date = new Date()) {
   const diffMs = startDate.getTime() - date.getTime();
   if (diffMs > 0 && diffMs <= 5 * 60 * 1000) return "due-soon";
   if (diffMs <= 0 && diffMs > -70 * 1000) return "due-now";
+  if (diffMs <= -70 * 1000) return "overdue";
   return "";
+}
+
+function getTaskTimeLabel(task, reminderStatus = "") {
+  if (!task.time) return "Tanpa jam";
+  if (reminderStatus === "due-soon") return `${task.time} · Sebentar lagi`;
+  if (reminderStatus === "due-now") return `${task.time} · Mulai sekarang`;
+  if (reminderStatus === "overdue") return `${task.time} · Terlewat`;
+  return task.time;
 }
 
 function getUpcomingTaskReminder(date = new Date()) {
@@ -1309,6 +1356,7 @@ function hasTaskReminderShown(task, type) {
 function checkTaskReminders() {
   if (document.body.classList.contains("access-locked")) return;
   const now = new Date();
+  renderTasks();
   renderPlannerReminder();
   state.tasks
     .filter((task) => !task.done && task.time)
@@ -2668,13 +2716,17 @@ startTaskReminderScheduler();
 document.addEventListener("visibilitychange", () => {
   if (focusTimer.running) tickFocusTimer();
   checkTaskReminders();
+  if (!document.hidden) refreshCloudState();
 });
 window.addEventListener("focus", () => {
   if (focusTimer.running) tickFocusTimer();
   checkTaskReminders();
+  refreshCloudState();
 });
 window.addEventListener("online", () => {
-  if (remoteSession && cloudReady) syncCloudState();
+  if (remoteSession && cloudReady) {
+    syncCloudState().then(refreshCloudState);
+  }
 });
 window.addEventListener("pagehide", () => {
   if (!remoteSession || !cloudReady || !localStorage.getItem(PENDING_SYNC_KEY)) return;

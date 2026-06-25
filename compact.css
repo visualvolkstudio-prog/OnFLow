@@ -825,16 +825,23 @@ body.auth-checking .access-card::after {
 }
 
 .task-group-list .list-item.due-soon,
-.task-group-list .list-item.due-now {
+.task-group-list .list-item.due-now,
+.task-group-list .list-item.overdue {
   border-color: rgba(221, 174, 55, 0.42);
   background: linear-gradient(135deg, rgba(221, 174, 55, 0.13), rgba(255, 255, 255, 0.96));
   box-shadow: inset 3px 0 0 rgba(221, 174, 55, 0.78);
 }
 
-.task-group-list .list-item.due-now {
+.task-group-list .list-item.due-now,
+.task-group-list .list-item.overdue {
   border-color: rgba(221, 83, 69, 0.36);
   background: linear-gradient(135deg, rgba(221, 83, 69, 0.11), rgba(255, 255, 255, 0.96));
   box-shadow: inset 3px 0 0 rgba(221, 83, 69, 0.78);
+}
+
+.task-group-list .list-item.overdue .task-time-meta {
+  color: var(--red);
+  font-weight: 800;
 }
 
 .task-time-meta {
@@ -1691,11 +1698,13 @@ html[data-theme="dark"] .task-group-list .list-item {
 }
 
 html[data-theme="dark"] .task-group-list .list-item.due-soon,
-html[data-theme="dark"] .task-group-list .list-item.due-now {
+html[data-theme="dark"] .task-group-list .list-item.due-now,
+html[data-theme="dark"] .task-group-list .list-item.overdue {
   background: linear-gradient(135deg, rgba(221, 174, 55, 0.13), rgba(20, 26, 23, 0.96));
 }
 
-html[data-theme="dark"] .task-group-list .list-item.due-now {
+html[data-theme="dark"] .task-group-list .list-item.due-now,
+html[data-theme="dark"] .task-group-list .list-item.overdue {
   background: linear-gradient(135deg, rgba(221, 83, 69, 0.13), rgba(20, 26, 23, 0.96));
 }
 
