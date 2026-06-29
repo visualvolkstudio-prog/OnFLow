@@ -169,12 +169,25 @@
   gap: 7px;
 }
 
-.daily-summary .ui-icon,
-.panel-heading h2 .ui-icon {
-  width: 15px;
-  height: 15px;
-  color: var(--green);
-  stroke-width: 2.25;
+/* ── Bootstrap Icons sizing overrides ── */
+i.bi {
+  font-style: normal;
+  line-height: 1;
+  display: inline-flex;
+  align-items: center;
+}
+
+i.bi.ui-icon {
+  font-size: 1rem;
+}
+
+i.bi.sidebar-icon {
+  font-size: 1.1rem;
+}
+
+.daily-summary i.bi.ui-icon,
+.panel-heading h2 i.bi.ui-icon {
+  font-size: 0.875rem;
 }
 
 .home-card,
@@ -485,12 +498,12 @@ label > span {
 }
 
 :root {
-  --page-bg: #f5f6f2;
+  --page-bg: #f4f6fb;
   --panel-bg: #ffffff;
-  --panel-soft: #f8faf8;
-  --panel-line: #e1e6e2;
-  --copy: #18211d;
-  --copy-muted: #68736d;
+  --panel-soft: #f0f3fb;
+  --panel-line: #e2e8f0;
+  --copy: #1a1f2e;
+  --copy-muted: #6b7280;
   --content-gap: 12px;
 }
 
@@ -1295,20 +1308,22 @@ html[data-theme="dark"] .brand-mark {
 }
 
 html[data-theme="dark"] {
-  --page-bg: #111613;
-  --panel-bg: #19201c;
-  --panel-soft: #141a17;
-  --panel-line: #303934;
-  --copy: #edf2ee;
-  --copy-muted: #9ca8a1;
+  --page-bg: #0f1117;
+  --panel-bg: #16181f;
+  --panel-soft: #1c1f2a;
+  --panel-line: #2a2d3a;
+  --copy: #e8eaf6;
+  --copy-muted: #8b90a0;
   --bg: var(--page-bg);
   --surface: var(--panel-bg);
   --surface-muted: var(--panel-soft);
   --text: var(--copy);
   --muted: var(--copy-muted);
   --line: var(--panel-line);
-  --accent: #63aa93;
-  --accent-strong: #78bea7;
+  --accent: #7c9dff;
+  --accent-strong: #9ab4ff;
+  --green: #34d399;
+  --income: #34d399;
 }
 
 html[data-theme="dark"] .workspace-sidebar,

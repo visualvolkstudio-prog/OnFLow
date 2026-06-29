@@ -39,23 +39,23 @@
 }
 
 .home-stat:nth-child(1) {
-  border-color: rgba(47, 111, 94, 0.16);
-  background: rgba(47, 111, 94, 0.09);
+  border-color: rgba(79, 110, 247, 0.16);
+  background: rgba(79, 110, 247, 0.07);
 }
 
 .home-stat:nth-child(2) {
-  border-color: rgba(221, 174, 55, 0.2);
-  background: rgba(221, 174, 55, 0.11);
+  border-color: rgba(245, 158, 11, 0.2);
+  background: rgba(245, 158, 11, 0.09);
 }
 
 .home-stat:nth-child(3) {
-  border-color: rgba(221, 83, 69, 0.17);
-  background: rgba(221, 83, 69, 0.09);
+  border-color: rgba(239, 68, 68, 0.17);
+  background: rgba(239, 68, 68, 0.07);
 }
 
 .home-stat:nth-child(4) {
-  border-color: rgba(51, 149, 242, 0.17);
-  background: rgba(51, 149, 242, 0.09);
+  border-color: rgba(59, 130, 246, 0.17);
+  background: rgba(59, 130, 246, 0.07);
 }
 
 .home-stat:nth-child(1) strong {
@@ -291,24 +291,34 @@
 
 :root {
   color-scheme: light;
-  --bg: #f6f7f4;
+
+  /* ── Fresh palette ── */
+  --bg: #f4f6fb;
   --surface: #ffffff;
-  --surface-muted: #edf1ee;
-  --text: #1e2420;
-  --muted: #68736d;
-  --line: #dce2dc;
-  --accent: #2f6f5e;
-  --accent-strong: #245647;
-  --gold: #ddae37;
-  --blue: #3395f2;
-  --red: #dd5345;
-  --warning: #ddae37;
-  --danger: #dd5345;
-  --income: #2f6f5e;
-  --expense: #dd5345;
-  --saving: #3395f2;
-  --debt: #ddae37;
-  --shadow: 0 18px 50px rgba(33, 43, 37, 0.08);
+  --surface-muted: #eef1f7;
+  --text: #1a1f2e;
+  --muted: #6b7280;
+  --line: #e2e8f0;
+
+  /* Accent — indigo-teal */
+  --accent: #4f6ef7;
+  --accent-strong: #3a57e8;
+
+  /* Semantic colors */
+  --gold: #f59e0b;
+  --blue: #3b82f6;
+  --red: #ef4444;
+  --green: #10b981;
+  --warning: #f59e0b;
+  --danger: #ef4444;
+
+  /* Finance colors */
+  --income: #10b981;
+  --expense: #ef4444;
+  --saving: #3b82f6;
+  --debt: #f59e0b;
+
+  --shadow: 0 4px 24px rgba(79, 110, 247, 0.08);
 }
 
 * {
@@ -333,6 +343,17 @@
   stroke-linejoin: round;
 }
 
+/* Bootstrap Icons adjustments */
+i.bi.ui-icon,
+i.bi.sidebar-icon {
+  width: auto;
+  height: auto;
+  font-size: 1.05rem;
+  fill: unset;
+  stroke: unset;
+  line-height: 1;
+}
+
 .sr-only {
   position: absolute !important;
   width: 1px !important;
@@ -346,8 +367,8 @@ body {
   margin: 0;
   min-height: 100vh;
   background:
-    linear-gradient(135deg, rgba(47, 111, 94, 0.11), transparent 32%),
-    linear-gradient(225deg, rgba(221, 174, 55, 0.13), transparent 28%),
+    linear-gradient(135deg, rgba(79, 110, 247, 0.07), transparent 32%),
+    linear-gradient(225deg, rgba(245, 158, 11, 0.08), transparent 28%),
     var(--bg);
   color: var(--text);
   font-family: "Switzer", ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
@@ -3352,23 +3373,23 @@ button {
 }
 
 .home-stat:nth-child(1) {
-  border-color: rgba(47, 111, 94, 0.16);
-  background: rgba(47, 111, 94, 0.09);
+  border-color: rgba(79, 110, 247, 0.16);
+  background: rgba(79, 110, 247, 0.07);
 }
 
 .home-stat:nth-child(2) {
-  border-color: rgba(221, 174, 55, 0.2);
-  background: rgba(221, 174, 55, 0.11);
+  border-color: rgba(245, 158, 11, 0.2);
+  background: rgba(245, 158, 11, 0.09);
 }
 
 .home-stat:nth-child(3) {
-  border-color: rgba(221, 83, 69, 0.17);
-  background: rgba(221, 83, 69, 0.09);
+  border-color: rgba(239, 68, 68, 0.17);
+  background: rgba(239, 68, 68, 0.07);
 }
 
 .home-stat:nth-child(4) {
-  border-color: rgba(51, 149, 242, 0.17);
-  background: rgba(51, 149, 242, 0.09);
+  border-color: rgba(59, 130, 246, 0.17);
+  background: rgba(59, 130, 246, 0.07);
 }
 
 .home-stat:nth-child(1) strong {
