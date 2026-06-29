@@ -838,7 +838,7 @@ function renderTasks() {
     main.className = "item-main";
     main.role = "button";
     main.tabIndex = 0;
-    main.innerHTML = `<span class="item-title"></span><span class="item-meta"><span class="task-time-meta"><svg class="ui-icon" aria-hidden="true"><use href="#icon-bell"></use></svg><span></span></span><span class="pill"></span></span>`;
+    main.innerHTML = `<span class="item-title"></span><span class="item-meta"><span class="task-time-meta"><i class="bi bi-bell ui-icon" aria-hidden="true"></i><span></span></span><span class="pill"></span></span>`;
     main.querySelector(".item-title").textContent = task.title;
     main.querySelector(".task-time-meta span").textContent = getTaskTimeLabel(task, reminderStatus);
     main.addEventListener("click", () => selectFocusTask(task.id, true));
@@ -1140,7 +1140,11 @@ function setFocusLock(locked) {
   if (els.focusModeLock) {
     els.focusModeLock.ariaLabel = locked ? "Buka kunci (tahan untuk membuka)" : "Kunci layar fokus";
     els.focusModeLock.title = locked ? "Tahan untuk membuka kunci" : "Tekan lama untuk mengunci";
-    els.focusModeLock.querySelector("use").setAttribute("href", locked ? "#icon-unlock" : "#icon-lock");
+    const icon = els.focusModeLock.querySelector("i.bi");
+    if (icon) {
+      icon.classList.toggle("bi-lock", !locked);
+      icon.classList.toggle("bi-unlock", locked);
+    }
   }
   if (els.focusModeClose) {
     els.focusModeClose.style.visibility = locked ? "hidden" : "";
@@ -2253,8 +2257,16 @@ function actionButton(text, label, handler) {
 }
 
 function iconMarkup(name) {
-  const icon = { delete: "trash", edit: "edit", play: "play", pause: "pause" }[name] || name;
-  return `<svg class="ui-icon" aria-hidden="true"><use href="#icon-${icon}"></use></svg>`;
+  const icon = {
+    check: "check2",
+    delete: "trash3",
+    edit: "pencil",
+    play: "play-fill",
+    pause: "pause-fill",
+    reset: "arrow-counterclockwise",
+    trash: "trash3"
+  }[name] || name;
+  return `<i class="bi bi-${icon} ui-icon" aria-hidden="true"></i>`;
 }
 
 els.taskForm.addEventListener("submit", (event) => {
